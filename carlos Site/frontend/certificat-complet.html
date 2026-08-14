@@ -433,72 +433,10 @@
     img.parentNode.insertBefore(fallback, img);
   };
 
-  // Convertir les chemins en provenance du bucket public "images_s" sur Supabase
-  document.addEventListener('DOMContentLoaded', () => {
-    const supabaseBucketUrl = 'https://nnppbnqavajmublpfhkj.supabase.co/storage/v1/object/public/images_s/';
-    const origin = window.location.origin;
-    
-    document.querySelectorAll('img').forEach(img => {
-      const src = img.getAttribute('src');
-      if (src && src.includes('images/')) {
-        const filename = src.split('images/').pop();
-        const fallbackUrl = origin + src;
-        
-        // Liste ordonnée de tentatives sur le bucket
-        const attempts = [];
-        attempts.push(filename);
-        
-        const lowerFilename = filename.toLowerCase();
-        if (lowerFilename !== filename) {
-          attempts.push(lowerFilename);
-        }
-        
-        const dotIndex = filename.lastIndexOf('.');
-        if (dotIndex !== -1) {
-          const base = filename.substring(0, dotIndex);
-          const ext = filename.substring(dotIndex).toLowerCase();
-          const baseLower = base.toLowerCase();
-          
-          const altExts = [];
-          if (ext === '.webp') altExts.push('.png', '.svg', '.jpeg', '.jpg');
-          else if (ext === '.png') altExts.push('.svg', '.webp', '.jpeg', '.jpg');
-          else if (ext === '.svg') altExts.push('.png', '.webp');
-          else if (ext === '.jpeg' || ext === '.jpg') altExts.push('.png', '.webp');
-          
-          for (const ae of altExts) {
-            attempts.push(base + ae);
-            attempts.push(baseLower + ae);
-          }
-        }
-        
-        const uniqueAttempts = [...new Set(attempts)];
-        let attemptIndex = 0;
-        
-        const tryNextAttempt = () => {
-          if (attemptIndex < uniqueAttempts.length) {
-            const currentAttempt = uniqueAttempts[attemptIndex];
-            attemptIndex++;
-            img.src = supabaseBucketUrl + currentAttempt;
-          } else {
-            // Si aucun fichier dans le bucket n'a fonctionné, retour au fallback local ou logo textuel
-            console.warn(`[Certificat Image] Aucun fichier correspondant trouvé pour ${filename} sur Supabase images_s. Fallback local.`);
-            img.src = fallbackUrl;
-            img.onerror = () => {
-              if (window.handleLogoError) {
-                window.handleLogoError(img, filename.includes('logo') ? 'infj' : 'mjd');
-              }
-            };
-          }
-        };
-        
-        img.onerror = () => {
-          tryNextAttempt();
-        };
-        
-        tryNextAttempt();
-      }
-    });
-  });
+  // NOTE: La redirection vers le bucket Supabase "images_s" a été retirée — plusieurs
+  // fichiers du bucket ont des noms différents des fichiers locaux (ex: pullman_toulouse.jpeg
+  // absent du bucket), ce qui causait des échecs réseau et un affichage cassé. Les images
+  // locales (/images/...) déjà présentes dans le build fonctionnent correctement telles quelles.
 
   // Initialisation Supabase Client localement s'il n'est pas déjà configuré sur window par le parent
   const supabaseUrlPref = 'https://nnppbnqavajmublpfhkj.supabase.co';

@@ -249,107 +249,19 @@ async function createNavigation(currentPage = '') {
     })
 }
 
-// Fonction pour rediriger automatiquement /images/ vers le bucket public "images_s" sur Supabase
-function applySupabaseImageRedirections() {
-    const supabaseBucketUrl = 'https://nnppbnqavajmublpfhkj.supabase.co/storage/v1/object/public/images_s/';
-    
-    const updateImageElement = (img) => {
-        if (img.dataset.redirected) return;
-        
-        const src = img.getAttribute('src');
-        if (src && src.includes('images/')) {
-            const filename = src.split('images/').pop();
-            
-            // Liste ordonnée de tentatives pour trouver le bon fichier et format dans le bucket public Supabase
-            const attempts = [];
-            attempts.push(filename); // Exact match
-            
-            const lowerFilename = filename.toLowerCase();
-            if (lowerFilename !== filename) {
-                attempts.push(lowerFilename); // Lowercase match
-            }
-            
-            // Variantes d'extensions pour les icônes de contact et logos
-            const dotIndex = filename.lastIndexOf('.');
-            if (dotIndex !== -1) {
-                const base = filename.substring(0, dotIndex);
-                const ext = filename.substring(dotIndex).toLowerCase();
-                const baseLower = base.toLowerCase();
-                
-                const altExts = [];
-                if (ext === '.webp') altExts.push('.png', '.svg', '.jpeg', '.jpg');
-                else if (ext === '.png') altExts.push('.svg', '.webp', '.jpeg', '.jpg');
-                else if (ext === '.svg') altExts.push('.png', '.webp');
-                else if (ext === '.jpeg' || ext === '.jpg') altExts.push('.png', '.webp');
-                
-                for (const ae of altExts) {
-                    attempts.push(base + ae);
-                    attempts.push(baseLower + ae);
-                }
-            }
-            
-            const uniqueAttempts = [...new Set(attempts)];
-            let attemptIndex = 0;
-            
-            img.dataset.originalSrc = src;
-            img.dataset.redirected = "true";
-            
-            const tryNextAttempt = () => {
-                if (attemptIndex < uniqueAttempts.length) {
-                    const currentAttempt = uniqueAttempts[attemptIndex];
-                    attemptIndex++;
-                    img.src = supabaseBucketUrl + currentAttempt;
-                } else {
-                    // Si aucun fichier dans le bucket n'a fonctionné, retour au fallback local local
-                    console.warn(`[Image Redirect] Aucun fichier correspondant trouvé pour ${filename} sur Supabase. Fallback local.`);
-                    img.src = src;
-                    img.onerror = null;
-                }
-            };
-            
-            img.onerror = () => {
-                tryNextAttempt();
-            };
-            
-            tryNextAttempt();
-        }
-    };
 
-    // Traiter les images existantes
-    document.querySelectorAll('img').forEach(updateImageElement);
+// NOTE: La fonction applySupabaseImageRedirections() a été retirée.
+// Elle réécrivait chaque <img src="/images/..."> pour tenter de charger depuis
+// le bucket Supabase "images_s" en premier, avant de retomber sur le fichier local.
+// Or plusieurs fichiers du bucket ont des noms complètement différents des fichiers
+// locaux (ex: "weel_tech_logo.png" vs "Logo WEEL TECH.png" dans le bucket, ou
+// "pullman_toulouse.jpeg" carrément absent du bucket) → échecs réseau systématiques,
+// clignotement d'images cassées, chargement ralenti — pour un bucket qui n'apporte
+// aucun bénéfice puisque les images locales (/images/...) fonctionnent déjà très bien.
 
-    // Regarder via MutationObserver si de nouvelles images sont ajoutées dynamiquement ou si leur 'src' est modifié
-    const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
-                if (mutation.target.tagName === 'IMG') {
-                    // Retirer le flag pour permettre la modification si l'attribut change
-                    delete mutation.target.dataset.redirected;
-                    updateImageElement(mutation.target);
-                }
-            } else if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.tagName === 'IMG') {
-                            updateImageElement(node);
-                        } else {
-                            node.querySelectorAll('img').forEach(updateImageElement);
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
-}
-
-// Initialiser la navigation au chargement et appliquer les redirections d'images
+// Initialiser la navigation au chargement
 document.addEventListener('DOMContentLoaded', () => {
     // Déterminer la page actuelle
     const currentPage = window.location.pathname.split('/').pop() || 'index.html'
     createNavigation(currentPage)
-    
-    // Activer la redirection d'images d'arrière-plan/images_s
-    applySupabaseImageRedirections()
 })
