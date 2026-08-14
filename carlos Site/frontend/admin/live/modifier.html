@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier un cours en direct - INFJ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../courses.css">
+    <link rel="stylesheet" href="../../navigation.css">
+    <link rel="stylesheet" href="../../back-button.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .form-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.06);
+            overflow: hidden;
+            border-top: 5px solid #f47c20; /* Orange border for edit actions */
+        }
+
+        .form-header {
+            background: #f8fafc;
+            padding: 20px 25px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-header h2 {
+            margin: 0;
+            color: #003366;
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .form-header p {
+            margin: 5px 0 0 0;
+            color: #64748b;
+            font-size: 0.88rem;
+        }
+
+        .form-body {
+            padding: 25px;
+        }
+
+        .form-field {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-field.inline {
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .form-field label {
+            color: #1e293b;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .form-field label span {
+            color: #ef4444;
+        }
+
+        .form-field input[type="text"],
+        .form-field input[type="number"],
+        .form-field input[type="datetime-local"],
+        .form-field select,
+        .form-field textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: #1e293b;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-field input:focus,
+        .form-field select:focus,
+        .form-field textarea:focus {
+            border-color: #f47c20;
+            box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.1);
+        }
+
+        .form-field textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-field input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #f47c20 0%, #d4630e 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(244, 124, 32, 0.2);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(244, 124, 32, 0.3);
+        }
+
+        .btn-cancel {
+            background: #fff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-cancel:hover {
+            background: #f1f5f9;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <main class="form-container">
+        <!-- Back button container -->
+        <div style="margin-bottom: 20px;">
+            <a href="index.html" class="btn-cancel" style="padding: 6px 15px; font-size: 0.85rem;">⬅️ Retour au Dashboard</a>
+        </div>
+
+        <div class="form-card">
+            <div class="form-header">
+                <h2>✏️ Modifier les Paramètres du Cours en Direct</h2>
+                <p>Modifiez le titre, les plages de programmation, la visibilité ou les conditions d'accès de la visioconférence.</p>
+            </div>
+            
+            <div class="form-body">
+                <form id="form-modifier-live">
+                    <!-- Title -->
+                    <div class="form-field">
+                        <label for="titre">Titre du cours en direct *</label>
+                        <input type="text" id="titre" required />
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-field">
+                        <label for="description">Description et objectifs pédagogiques</label>
+                        <textarea id="description"></textarea>
+                    </div>
+
+                    <!-- Linked Course/Formation -->
+                    <div class="form-field">
+                        <label for="formation_id">Formation de l'INFJ concernée</label>
+                        <select id="formation_id">
+                            <option value="">Séance générale de visioconférence (Ouverte à tous)</option>
+                            <!-- Dynamically loaded -->
+                        </select>
+                    </div>
+
+                    <!-- Date Prevue -->
+                    <div class="form-field">
+                        <label for="date_prevue">Date et Heure de démarrage *</label>
+                        <input type="datetime-local" id="date_prevue" required />
+                    </div>
+
+                    <!-- Max Participants -->
+                    <div class="form-field">
+                        <label for="max_participants">Nombre maximum d'étudiants autorisés</label>
+                        <input type="number" id="max_participants" value="50" min="5" max="250" />
+                    </div>
+
+                    <!-- Password Optionnel -->
+                    <div class="form-field">
+                        <label for="mot_de_passe">Mot de passe de visioconférence (Optionnel)</label>
+                        <input type="text" id="mot_de_passe" placeholder="Laisser vide si aucun" />
+                    </div>
+
+                    <!-- Gratuité & Tarification -->
+                    <div class="form-field inline">
+                        <input type="checkbox" id="gratuit" />
+                        <label for="gratuit">Ce cours en direct est entièrement gratuit</label>
+                    </div>
+
+                    <div class="form-field" id="field-prix" style="display: none;">
+                        <label for="prix">Tarif du ticket d'accès (HTG)</label>
+                        <input type="number" id="prix" value="0" min="0" step="50" />
+                    </div>
+
+                    <!-- Jitsi Meeting ID (READ ONLY - avoid breaking active rooms) -->
+                    <div class="form-field">
+                        <label for="meeting_id_display">Code salon Jitsi Meet sécurisé (Non modifiable)</label>
+                        <input type="text" id="meeting_id_display" style="font-family: monospace; background: #e2e8f0;" readonly />
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="form-actions">
+                        <a href="index.html" class="btn-cancel">Annuler</a>
+                        <button type="submit" class="btn-submit">💾 Enregistrer les modifications</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="../../navigation-standalone.js"></script>
+    <script type="module" src="../../back-button.js"></script>
+    <script type="module">
+        import { supabase, utils } from '../../supabase-config.js';
+
+        let sessionId = null;
+        let sessionData = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Authentification & Rôle
+            const isAdmin = await utils.isAdmin();
+            if (!isAdmin) {
+                alert("Accès réservé.");
+                window.location.href = '../../index.html';
+                return;
+            }
+
+            // Récupérer ID depuis l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            sessionId = urlParams.get('id');
+
+            if (!sessionId) {
+                alert("ID de session invalide ou manquant.");
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // 2. Charger les formations dans le Select
+            await chargerFormations();
+
+            // 3. Charger les données du cours à éditer
+            await chargerSessionDetails();
+
+            // Configurer l'affichage dynamique du prix
+            document.getElementById('gratuit').addEventListener('change', (e) => {
+                document.getElementById('field-prix').style.display = e.target.checked ? 'none' : 'block';
+                if (e.target.checked) {
+                    document.getElementById('prix').value = '0';
+                }
+            });
+
+            // Gérer la soumission du formulaire
+            document.getElementById('form-modifier-live').addEventListener('submit', handleFormSubmit);
+        });
+
+        // Charger les options de formations
+        async function chargerFormations() {
+            const select = document.getElementById('formation_id');
+            if (!select) return;
+
+            try {
+                const { data } = await supabase
+                    .from('formations')
+                    .select('id, titre')
+                    .order('titre');
+
+                if (data) {
+                    data.forEach(f => {
+                        const opt = document.createElement('option');
+                        opt.value = f.id;
+                        opt.textContent = f.titre;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.error("Erreur de récupération des formations :", err);
+            }
+        }
+
+        // Charger détails de la session
+        async function chargerSessionDetails() {
+            try {
+                const { data, error } = await supabase
+                    .from('live_sessions')
+                    .select('*')
+                    .eq('id', sessionId)
+                    .single();
+
+                if (error || !data) {
+                    alert("Impossible de charger les détails de cette séance.");
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                sessionData = data;
+
+                // Remplir les champs
+                document.getElementById('titre').value = data.titre;
+                document.getElementById('description').value = data.description || '';
+                document.getElementById('formation_id').value = data.formation_id || '';
+                
+                // Formater la date pour datetime-local (YYYY-MM-DDTHH:MM)
+                if (data.date_prevue) {
+                    const dateObj = new Date(data.date_prevue);
+                    const formattedDate = dateObj.toISOString().slice(0, 16);
+                    document.getElementById('date_prevue').value = formattedDate;
+                }
+
+                document.getElementById('max_participants').value = data.max_participants || 50;
+                document.getElementById('mot_de_passe').value = data.mot_de_passe || '';
+                document.getElementById('gratuit').checked = data.gratuit;
+                document.getElementById('prix').value = data.prix || 0;
+                document.getElementById('meeting_id_display').value = data.meeting_id;
+
+                // Gérer affichage prix
+                document.getElementById('field-prix').style.display = data.gratuit ? 'none' : 'block';
+
+            } catch (err) {
+                console.error("Erreur de récupération des détails :", err);
+            }
+        }
+
+        // Traiter soumission de modification
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const titre = document.getElementById('titre').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const formation_id = document.getElementById('formation_id').value || null;
+            const date_prevue = document.getElementById('date_prevue').value;
+            const max_participants = parseInt(document.getElementById('max_participants').value) || 50;
+            const gratuit = document.getElementById('gratuit').checked;
+            const prix = gratuit ? 0 : parseFloat(document.getElementById('prix').value) || 0;
+            const mot_de_passe = document.getElementById('mot_de_passe').value.trim() || null;
+
+            if (!titre || !date_prevue) {
+                alert("Veuillez remplir tous les champs obligatoires (*).");
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('live_sessions')
+                    .update({
+                        titre,
+                        description,
+                        formation_id,
+                        date_prevue,
+                        max_participants,
+                        gratuit,
+                        prix,
+                        mot_de_passe,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', sessionId);
+
+                if (error) throw error;
+
+                alert("Le cours en direct a été modifié avec succès !");
+                window.location.href = 'index.html';
+
+            } catch (err) {
+                console.error("Erreur lors de la modification de la séance :", err);
+                alert("Impossible d'enregistrer les modifications. Veuillez réessayer.");
+            }
+        }
+    </script>
+</body>
+</html>

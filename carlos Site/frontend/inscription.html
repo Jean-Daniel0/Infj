@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription à la Formation - Institut National de Formation des Jeunes</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="navigation.css">
+    <link rel="stylesheet" href="back-button.css">
+    <link rel="stylesheet" href="auth.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .inscription-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .inscription-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 51, 102, 0.1);
+            overflow: hidden;
+            border-top: 6px solid #f47c20;
+            display: flex;
+            flex-direction: column;
+        }
+        .course-info-banner {
+            background: linear-gradient(135deg, #003366 0%, #1a3365 100%);
+            color: #ffffff;
+            padding: 30px;
+            border-bottom: 2px solid #f47c20;
+        }
+        .course-info-banner h2 {
+            margin: 0 0 10px 0;
+            color: #ffffff;
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+        .course-info-banner p {
+            margin: 0;
+            color: #cbd5e1;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        .course-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .detail-item span.icon {
+            font-size: 1.2rem;
+        }
+        .inscription-body {
+            padding: 40px 30px;
+        }
+        .auth-notice {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .auth-notice h3 {
+            color: #003366;
+            margin-bottom: 12px;
+            font-size: 1.4rem;
+        }
+        .auth-notice p {
+            color: #64748b;
+            margin-bottom: 25px;
+            font-size: 1rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+        .auth-notice-btns {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .auth-notice-btn {
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .auth-notice-btn.primary {
+            background: #f47c20;
+            color: white;
+        }
+        .auth-notice-btn.primary:hover {
+            background: #ff8e3c;
+            transform: translateY(-2px);
+        }
+        .auth-notice-btn.secondary {
+            background: transparent;
+            color: #003366;
+            border: 2px solid #003366;
+        }
+        .auth-notice-btn.secondary:hover {
+            background: rgba(0, 51, 102, 0.05);
+            transform: translateY(-2px);
+        }
+        .form-feedback {
+            display: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.95rem;
+        }
+        .feedback-success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+        .feedback-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
+        .feedback-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .padlock-icon {
+            display: inline-block;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <main class="inscription-container">
+        <!-- Bouton retour -->
+        <div style="margin-bottom: 20px;">
+            <a href="formation.html" class="back-link" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: #003366; font-weight: bold;">
+                ← Retour au programme des formations
+            </a>
+        </div>
+
+        <div class="inscription-card">
+            <!-- Entête de formation dynamique -->
+            <div class="course-info-banner">
+                <h2 id="courseTitle">Chargement de la formation...</h2>
+                <p id="courseDesc">Nous récupérons les informations détaillées du programme...</p>
+                <div class="course-details-grid">
+                    <div class="detail-item">
+                        <span class="icon">⏳</span>
+                        <span id="courseDuration">Durée : ...</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="icon">💻</span>
+                        <span id="courseModality">Modalité : ...</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="icon">🏆</span>
+                        <span>Certificat officiel inclus</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenu dynamique basé sur l'authentification -->
+            <div class="inscription-body">
+                <!-- Message de connexion requise -->
+                <div id="authRequiredNotice" class="auth-notice" style="display: none;">
+                    <h3>Compte étudiant requis</h3>
+                    <p>Pour vous inscrire à un programme de formation officielle de l'INFJ, vous devez disposer d'un compte étudiant connecté. Cela vous permettra de suivre vos cours, de soumettre vos travaux et de générer votre certificat nominatif en fin de cursus.</p>
+                    <div class="auth-notice-btns">
+                        <a id="loginRedirectBtn" class="auth-notice-btn primary" href="#">Se connecter</a>
+                        <a id="registerRedirectBtn" class="auth-notice-btn secondary" href="#">Créer un compte</a>
+                    </div>
+                </div>
+
+                <!-- Formulaire d'inscription -->
+                <form id="enrollmentForm" style="display: none; flex-direction: column; gap: 20px;">
+                    <div style="background: rgba(244, 124, 32, 0.08); padding: 15px; border-radius: 8px; border-left: 4px solid #f47c20; font-size: 0.88rem; color: #1a3365; font-weight: 500; line-height: 1.5; margin-bottom: 10px;">
+                        📌 <strong>Mention importante :</strong> Ces informations d'inscription (Nom et Prénom) serviront de base légale pour remplir automatiquement les champs de votre <strong>Certificat d'Aptitude Académique et Professionnelle</strong> officiel à la fin de vos études lorsque l'administration validera votre cursus. Assurez-vous qu'elles soient parfaitement exactes.
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <input type="hidden" id="enrollmentFormCourseId" />
+                        
+                        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="enrollPrenom" style="font-weight: 700; color: #003366; font-size: 0.9rem;">Prénom <span style="color:#ef4444;">*</span></label>
+                            <input id="enrollPrenom" type="text" placeholder="Entrez votre prénom" required style="padding: 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 1rem; font-family: inherit; width: 100%; box-sizing: border-box;" />
+                        </div>
+                        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="enrollNom" style="font-weight: 700; color: #003366; font-size: 0.9rem;">Nom de famille <span style="color:#ef4444;">*</span></label>
+                            <input id="enrollNom" type="text" placeholder="Entrez votre nom" required style="padding: 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 1rem; font-family: inherit; width: 100%; box-sizing: border-box;" />
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="enrollEmail" style="font-weight: 700; color: #003366; font-size: 0.9rem;">Adresse E-mail <span style="font-size: 0.8rem; color:#64748b;">(liée au compte)</span></label>
+                            <input id="enrollEmail" type="email" disabled style="padding: 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 1rem; background: #e2e8f0; color: #64748b; cursor: not-allowed; font-family: inherit; width: 100%; box-sizing: border-box;" />
+                        </div>
+                        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="enrollPhone" style="font-weight: 700; color: #003366; font-size: 0.9rem;">Téléphone / WhatsApp <span style="color:#ef4444;">*</span></label>
+                            <input id="enrollPhone" type="tel" placeholder="Ex: +509 4634-1547" required style="padding: 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 1rem; font-family: inherit; width: 100%; box-sizing: border-box;" />
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="enrollMotivation" style="font-weight: 700; color: #003366; font-size: 0.9rem;">Vos motivations pour ce programme <span style="color:#ef4444;">*</span></label>
+                        <textarea id="enrollMotivation" placeholder="Décrivez brièvement vos motivations pour suivre cette formation, vos acquis actuels et vos ambitions professionnelles post-certification..." required style="padding: 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 1rem; min-height: 120px; resize: vertical; font-family: inherit; width: 100%; box-sizing: border-box;"></textarea>
+                    </div>
+
+                    <!-- Section Paiement Dynamique (affichée uniquement si payant) -->
+                    <div id="paymentSection" style="display: none; flex-direction: column; gap: 15px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 20px; box-sizing: border-box;">
+                        <h4 style="color: #003366; margin: 0; font-size: 1.1rem; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 8px;">
+                            💳 Règlement MonCash (Frais d'accès : <span id="paymentPriceLabel">0</span> HTG)
+                        </h4>
+                        <p style="color: #64748b; font-size: 0.85rem; margin: 0;">Ce programme d'apprentissage possède des frais académiques obligatoires. Le paiement s'effectue en ligne de manière instantanée et sécurisée :</p>
+                        
+                        <!-- Radio cachée pour compatibilité JS -->
+                        <input type="radio" name="payment_method" value="MonCashOnline" checked style="display: none;" />
+
+                        <!-- Instructions spécifiques MonCash en Ligne -->
+                        <div id="method-MonCashOnline" class="payment-instruction-box" style="display: block; font-size: 0.88rem; line-height: 1.5; color: #334155; padding: 15px; background: #ecfdf5; border-left: 4px solid #10b981; border-radius: 6px;">
+                            <strong>Paiement en ligne sécurisé par MonCash :</strong><br>
+                            Saisissez votre numéro de téléphone MonCash ci-dessous pour lancer la transaction sécurisée en HTG.<br>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-width: 320px;">
+                                <label style="font-weight: 600; font-size: 12px; color: #475569;">Numéro de téléphone MonCash *</label>
+                                <input id="moncashPhone" type="tel" placeholder="Ex: +509 4634-1547" style="padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px;" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="formFeedback" class="form-feedback"></div>
+
+                    <button type="submit" id="submitEnrollBtn" style="background: linear-gradient(135deg, #f47c20 0%, #ff6b35 100%); color: white; border: none; padding: 15px; border-radius: 30px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 0.05em; transition: all 0.3s ease; margin-top: 15px; box-shadow: 0 4px 15px rgba(244, 124, 32, 0.3);">
+                        Confirmer mon inscription au programme
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-logos">
+            <div class="footer-logos-row">
+                <img src="/images/AKOLAD.png" alt="Logo AKOLAD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/michel_jd_groupe_ltd.png" alt="Logo Michel-JD Groupe LTD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/weel_tech_logo.png" alt="Logo WEEL TECH" class="footer-logo" referrerPolicy="no-referrer" />
+            </div>
+            <div class="footer-socials">
+                <a href="https://facebook.com" target="_blank" class="footer-social" aria-label="Facebook">
+                    <img src="/images/facebook.png" alt="Facebook" />
+                </a>
+                <a href="https://wa.me/50946341547" target="_blank" class="footer-social" aria-label="WhatsApp">
+                    <img src="/images/whatsapp.webp" alt="WhatsApp" />
+                </a>
+                <a href="mailto:institutnationaldfj@gmail.com" class="footer-social" aria-label="Email">
+                    <img src="/images/email.png" alt="Email" />
+                </a>
+            </div>
+            <p class="footer-copyright">&copy; 2024 Institut National de Formation des Jeunes. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="script.js"></script>
+    <script type="module">
+        import { supabase, auth, inscriptions } from './supabase-config.js';
+        import { PAYMENT_CONFIG } from './config.js';
+
+        // Table des programmes disponibles
+        const COURSE_MAP = {
+            leadership: {
+                titre: "Formation intensive en LEADERSHIP ORGANISATIONNEL",
+                description: "Pour acquérir de réelles habiletés managériales, maîtriser la conduite du changement d'entreprise et mobiliser ses collaborateurs de façon dynamique.",
+                duree: "8 semaines (60 heures)",
+                modalite: "En ligne (Google Meet / WhatsApp)",
+                image: "/images/pullman_toulouse.jpeg",
+                gratuit: true,
+                places_max: 50,
+                places_restantes: 50,
+                modules: [
+                    "Introduction au leadership organisationnel",
+                    "Développement personnel du leader",
+                    "Prise de parole en public",
+                    "Gestion du temps et des priorités",
+                    "Management des équipes",
+                    "Communication en organisation",
+                    "Gestion des conflits",
+                    "Prise de décisions stratégiques"
+                ],
+                formateur_nom: "Instructeur INFJ",
+                formateur_role: "Formateur Principal"
+            },
+            entrepreneuriat: {
+                titre: "Entrepreneuriat",
+                description: "Développez l’état d’esprit entrepreneurial, de l'idée brute au déploiement du business model idéal, en passant par le marketing opérationnel.",
+                duree: "6 semaines (30 heures)",
+                modalite: "En ligne",
+                image: "/images/business_photos.jpeg",
+                gratuit: true,
+                places_max: 50,
+                places_restantes: 50,
+                modules: ["Introduction à l'entrepreneuriat", "Génération d'idées", "Business Plan", "Financement de projet", "Lancement d'activité", "Gestion de l'entreprise"],
+                formateur_nom: "Conseiller Entreprise",
+                formateur_role: "Directeur Académique"
+            },
+            communication: {
+                titre: "Communication",
+                description: "Maîtrisez les codes verbaux et non-verbaux essentiels, la prise de parole charismatique en public et la rédaction professionnelle stratégique.",
+                duree: "4 semaines (20 heures)",
+                modalite: "En ligne",
+                image: "/images/handshake_deal.jpeg",
+                gratuit: true,
+                places_max: 50,
+                places_restantes: 50,
+                modules: ["Bases de la communication", "Écoute active", "Prise de parole en public", "Communication numérique", "Gestion de l'image"],
+                formateur_nom: "Expert Communication",
+                formateur_role: "Coach en Prise de Parole"
+            },
+            marketing: {
+                titre: "Marketing Digital",
+                description: "Maîtrisez le SEO, la gestion efficace de communautés, le copywriting persuasif et le lancement de campagnes publicitaires à fort impact.",
+                duree: "6 semaines (35 heures)",
+                modalite: "En ligne",
+                image: "/images/office.jpeg",
+                gratuit: true,
+                places_max: 50,
+                places_restantes: 50,
+                modules: ["Fondations du marketing digital", "SEO & Référencement", "Publicité Facebook & Google", "Email marketing", "Stratégie de contenu"],
+                formateur_nom: "Consultant Digital",
+                formateur_role: "Traffic Manager"
+            },
+            web: {
+                titre: "Création de site web",
+                description: "Apprenez les langages du web (HTML, CSS et CMS), hébergez vos architectures professionnelles et publiez des produits fonctionnels.",
+                duree: "8 semaines (60 heures)",
+                modalite: "En ligne",
+                image: "/images/workforce_photos.jpeg",
+                gratuit: true,
+                places_max: 50,
+                places_restantes: 50,
+                modules: ["Bases du web (HTML/CSS)", "Frameworks modernes", "Hébergement & Domaines", "SEO pour développeurs", "WordPress complet"],
+                formateur_nom: "Développeur FullStack",
+                formateur_role: "Lead Developer"
+            },
+            dropshipping: {
+                titre: "Dropshipping",
+                description: "Maîtrisez le commerce sans stock, la recherche de niches et produits gagnants, la création de boutiques e-commerce et le ciblage publicitaire.",
+                duree: "4 semaines (25 heures)",
+                modalite: "En ligne",
+                image: "/images/office.jpeg",
+                gratuit: true,
+                places_max: 50,
+                places_restantes: 50,
+                modules: ["Modèle dropshipping", "Sélection de produits gagnants", "Création de boutique Shopify", "Publicité & Acquisition client", "Sourcing & Fournisseurs"],
+                formateur_nom: "E-commerçant Pro",
+                formateur_role: "Expert Shopify"
+            }
+        };
+
+        let currentUser = null;
+        let selectedCourse = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initPage();
+        });
+
+        async function initPage() {
+            // 1. Lire le cours demandé dans l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseSlug = urlParams.get('course') || 'leadership';
+            
+            // Regex pour vérifier si c'est un UUID valide
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseSlug);
+            
+            let dbCourse = null;
+            if (isUUID) {
+                try {
+                    const { data, error } = await supabase
+                        .from('formations')
+                        .select('*')
+                        .eq('id', courseSlug)
+                        .maybeSingle();
+                    if (data) dbCourse = data;
+                } catch (e) {
+                    console.error("Erreur de récupération par UUID :", e);
+                }
+            } else {
+                const localCourse = COURSE_MAP[courseSlug] || COURSE_MAP['leadership'];
+                const targetTitle = localCourse.titre;
+                try {
+                    const { data, error } = await supabase
+                        .from('formations')
+                        .select('*')
+                        .eq('titre', targetTitle)
+                        .maybeSingle();
+                    if (data) dbCourse = data;
+                } catch (e) {
+                    console.error("Erreur de récupération par titre :", e);
+                }
+            }
+
+            if (dbCourse) {
+                const meta = dbCourse.modules && typeof dbCourse.modules === 'object' ? dbCourse.modules : {};
+                selectedCourse = {
+                    id: dbCourse.id,
+                    titre: dbCourse.titre,
+                    description: dbCourse.description,
+                    duree: dbCourse.duree || 'Seulement quelques semaines',
+                    modalite: dbCourse.modalite || 'En ligne',
+                    gratuit: dbCourse.gratuit !== false,
+                    places_max: dbCourse.places_max || 50,
+                    places_restantes: dbCourse.places_restantes !== undefined ? dbCourse.places_restantes : 50,
+                    formateur_nom: dbCourse.formateur_nom || meta.formateur_nom || 'Jean-Daniel Michel',
+                    formateur_role: dbCourse.formateur_role || meta.formateur_role || 'Enseignant INFJ',
+                    modules: Array.isArray(meta.liste) ? meta.liste : (Array.isArray(dbCourse.modules) ? dbCourse.modules : [])
+                };
+            } else {
+                selectedCourse = COURSE_MAP[courseSlug] || COURSE_MAP['leadership'];
+            }
+
+            // 2. Mettre à jour les informations visuelles
+            document.getElementById('courseTitle').textContent = selectedCourse.titre;
+            document.getElementById('courseDesc').textContent = selectedCourse.description;
+            document.getElementById('courseDuration').textContent = `Durée : ${selectedCourse.duree}`;
+            document.getElementById('courseModality').textContent = `Modalité : ${selectedCourse.modalite}`;
+
+            // Configurer les redirections authentifiées
+            document.getElementById('loginRedirectBtn').href = `login.html?redirect=inscription.html?course=${courseSlug}`;
+            document.getElementById('registerRedirectBtn').href = `register.html?redirect=inscription.html?course=${courseSlug}`;
+
+            // 3. Vérifier l'authentification de l'étudiant
+            try {
+                const { user, error } = await auth.getCurrentUser();
+                
+                if (error || !user) {
+                    // Afficher avis de connexion requise
+                    displayAuthRequired();
+                    return;
+                }
+                
+                currentUser = user;
+                // Afficher le formulaire et récupérer la formation en base
+                await setupEnrollmentForm();
+            } catch (err) {
+                console.error('Erreur authentification:', err);
+                displayAuthRequired();
+            }
+        }
+
+        function displayAuthRequired() {
+            document.getElementById('authRequiredNotice').style.display = 'block';
+            document.getElementById('enrollmentForm').style.display = 'none';
+        }
+
+        function selectPaymentMethod(method) {
+            document.querySelectorAll('.payment-instruction-box').forEach(box => {
+                box.style.display = 'none';
+            });
+            const activeBox = document.getElementById(`method-${method}`);
+            if (activeBox) activeBox.style.display = 'block';
+
+            const refGroup = document.getElementById('paymentRefGroup');
+            if (refGroup) {
+                if (method === 'MonCashOnline') {
+                    refGroup.style.display = 'none';
+                } else {
+                    refGroup.style.display = 'flex';
+                }
+            }
+        }
+        window.selectPaymentMethod = selectPaymentMethod;
+
+        async function setupEnrollmentForm() {
+            document.getElementById('authRequiredNotice').style.display = 'none';
+            const form = document.getElementById('enrollmentForm');
+            form.style.display = 'flex';
+
+            // Remplir les informations utilisateur (email) et métadonnées si présentes
+            document.getElementById('enrollEmail').value = currentUser.email || '';
+            
+            const meta = currentUser.user_metadata || {};
+            document.getElementById('enrollPrenom').value = meta.prenom || '';
+            document.getElementById('enrollNom').value = meta.nom || '';
+            document.getElementById('enrollPhone').value = meta.telephone || '';
+
+            // Obtenir ou injecter la formation dans la table public.formations Supabase
+            const targetTitle = selectedCourse.titre;
+            let dbFormation = null;
+
+            try {
+                if (selectedCourse.id) {
+                    const { data } = await supabase
+                        .from('formations')
+                        .select('*')
+                        .eq('id', selectedCourse.id)
+                        .maybeSingle();
+                    if (data) dbFormation = data;
+                }
+
+                if (!dbFormation) {
+                    // Essayer de trouver la formation par titre exact ou similaire
+                    const { data, error } = await supabase
+                        .from('formations')
+                        .select('*')
+                        .eq('titre', targetTitle)
+                        .maybeSingle();
+
+                    if (data) {
+                        dbFormation = data;
+                    } else {
+                        // Si elle n'existe pas en base, on l'ajoute automatiquement de façon transparente (auto-seeding)
+                        const modulesPayload = typeof selectedCourse.modules === 'object' ? selectedCourse.modules : [];
+                        
+                        // On enregistre les infos du formateur principal dans le JSONb modules pour correspondre à notre structure
+                        const modulesWithMeta = {
+                            liste: modulesPayload,
+                            formateur_nom: selectedCourse.formateur_nom || 'Jean-Daniel Michel',
+                            formateur_role: selectedCourse.formateur_role || 'Enseignant INFJ',
+                            image_couverture: selectedCourse.image || '/images/pullman_toulouse.jpeg'
+                        };
+
+                        const { data: newForm, error: errInsert } = await supabase
+                            .from('formations')
+                            .insert([{
+                                titre: targetTitle,
+                                description: selectedCourse.description,
+                                duree: selectedCourse.duree,
+                                modalite: selectedCourse.modalite,
+                                gratuit: selectedCourse.gratuit,
+                                places_max: selectedCourse.places_max,
+                                places_restantes: selectedCourse.places_restantes,
+                                statut: 'active',
+                                modules: modulesWithMeta
+                            }])
+                            .select()
+                            .maybeSingle();
+
+                        if (errInsert) throw errInsert;
+                        dbFormation = newForm;
+                    }
+                }
+
+                if (dbFormation) {
+                    document.getElementById('enrollmentFormCourseId').value = dbFormation.id;
+                    
+                    // Mettre à jour l'affichage avec le contenu réel réactualisé par l'admin
+                    document.getElementById('courseTitle').textContent = dbFormation.titre;
+                    document.getElementById('courseDesc').textContent = dbFormation.description;
+                    document.getElementById('courseDuration').textContent = `Durée : ${dbFormation.duree || 'Seulement quelques semaines'}`;
+                    document.getElementById('courseModality').textContent = `Modalité : ${dbFormation.modalite || 'En ligne'}`;
+
+                    // Gérer l'affichage de la section paiement
+                    const isFree = dbFormation.gratuit !== false && (dbFormation.prix === undefined || Number(dbFormation.prix) === 0);
+                    const paySection = document.getElementById('paymentSection');
+                    if (paySection) {
+                        if (!isFree) {
+                            paySection.style.display = 'flex';
+                            const price = Number(dbFormation.prix || 0);
+                            document.getElementById('paymentPriceLabel').textContent = price.toLocaleString();
+                            document.querySelectorAll('.payable-amount').forEach(el => {
+                                el.textContent = price.toLocaleString();
+                            });
+                            
+                            // Attacher des écouteurs sur les sélections radios de paiement
+                            document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+                                radio.addEventListener('change', (e) => {
+                                    selectPaymentMethod(e.target.value);
+                                });
+                            });
+                            selectPaymentMethod('MonCashOnline');
+                        } else {
+                            paySection.style.display = 'none';
+                        }
+                    }
+
+                    // Vérifier si l'étudiant est déjà inscrit
+                    await checkExistingInscription(dbFormation.id);
+                }
+            } catch (err) {
+                console.error("Erreur lors de l'intégration base de la formation :", err);
+                showFeedback("Impossible d'associer la formation. Veuillez réessayer.", "danger");
+            }
+
+            // Gestionnaire de soumission
+            form.addEventListener('submit', handleEnrollmentSubmit);
+        }
+
+        async function checkExistingInscription(formationId) {
+            try {
+                const { data, error } = await supabase
+                    .from('inscriptions')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .eq('formation_id', formationId)
+                    .maybeSingle();
+
+                if (data) {
+                    const submitBtn = document.getElementById('submitEnrollBtn');
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+
+                    if (data.status === 'en_attente') {
+                        showFeedback("Vous avez déjà soumis votre candidature pour cette formation. Elle est actuellement en attente d'approbation administrative.", "warning");
+                    } else if (data.status === 'acceptee') {
+                        if (data.certificat_emission) {
+                            showFeedback("Félicitations ! Vous avez déjà complété ce programme et obtenu votre certificat d'aptitude. Consultez votre boîte mail ou votre espace étudiant.", "success");
+                        } else {
+                            showFeedback("Votre inscription est active ! Vous pouvez directement suivre ce programme dans votre espace cours.", "success");
+                        }
+                    } else if (data.status === 'refusee') {
+                        showFeedback("Votre candidature précédente a été déclinée par le conseil pédagogique. Veuillez nous contacter directement pour plus de détails.", "danger");
+                    } else {
+                        showFeedback("Vous êtes déjà enregistré(e) pour cette formation.", "warning");
+                    }
+                }
+            } catch (err) {
+                console.warn("Erreur de pré-vérification de doublon :", err);
+            }
+        }
+
+        async function handleEnrollmentSubmit(e) {
+            e.preventDefault();
+
+            const formationId = document.getElementById('enrollmentFormCourseId').value;
+            const prenomVal = document.getElementById('enrollPrenom').value.trim();
+            const nomVal = document.getElementById('enrollNom').value.trim();
+            const phoneVal = document.getElementById('enrollPhone').value.trim();
+            const motivationVal = document.getElementById('enrollMotivation').value.trim();
+
+            if (!formationId) {
+                showFeedback("Erreur interne : l'indexation de la formation a échoué.", "danger");
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitEnrollBtn');
+            const paySection = document.getElementById('paymentSection');
+            
+            let paymentData = {};
+            if (paySection && paySection.style.display !== 'none') {
+                const methodRadio = document.querySelector('input[name="payment_method"]:checked');
+                if (!methodRadio) {
+                    showFeedback("Veuillez choisir un moyen de règlement pour continuer.", "danger");
+                    return;
+                }
+                const method = methodRadio.value;
+                const amount = parseFloat(document.getElementById('paymentPriceLabel').textContent.replace(/,/g, '')) || 0;
+                
+                if (method === 'MonCashOnline') {
+                    const phone = document.getElementById('moncashPhone').value.trim();
+                    if (!phone) {
+                        showFeedback("Veuillez saisir votre numéro de téléphone MonCash pour lancer le règlement en ligne.", "danger");
+                        return;
+                    }
+                    
+                    try {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Connexion à la passerelle MonCash...';
+                        
+                        const response = await fetch('/api/bazik/pay-formation', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                formationId: formationId,
+                                userId: currentUser.id
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok && data.redirectUrl) {
+                            paymentData = {
+                                methode_paiement: 'MonCash (En Ligne)',
+                                reference_paiement: data.referenceId,
+                                montant_paye: amount,
+                                status: 'en_attente'
+                            };
+                            
+                            // Sauvegarder d'abord l'inscription dans Supabase avant de rediriger
+                            const enrollmentData = {
+                                user_id: currentUser.id,
+                                formation_id: formationId,
+                                nom: nomVal,
+                                prenom: prenomVal,
+                                email: currentUser.email,
+                                telephone: phoneVal,
+                                motivation: motivationVal || 'Inscription via site web',
+                                ...paymentData
+                            };
+                            await inscriptions.register(formationId, enrollmentData);
+                            
+                            window.location.href = data.redirectUrl;
+                            return;
+                        } else {
+                            throw new Error(data.error || "Clés d'API Bazik non configurées sur ce serveur ou transaction défaillante.");
+                        }
+                    } catch (apiErr) {
+                        console.error("Échec du raccordement Bazik :", apiErr);
+                        showFeedback("Erreur de passerelle : " + (apiErr.text || apiErr.message || apiErr), "danger");
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Confirmer mon inscription au programme';
+                        return;
+                    }
+                }
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enregistrement de votre dossier...';
+            submitBtn.style.opacity = '0.7';
+
+            try {
+                // Re-vérifier s'il y a un doublon
+                const { data: checkInsc } = await supabase
+                    .from('inscriptions')
+                    .select('id')
+                    .eq('user_id', currentUser.id)
+                    .eq('formation_id', formationId)
+                    .maybeSingle();
+
+                if (checkInsc) {
+                    showFeedback("Vous êtes déjà inscrit(e) à ce programme de formation.", "warning");
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Confirmer mon inscription au programme';
+                    submitBtn.style.opacity = '1';
+                    return;
+                }
+
+                // Enregistrer l'inscription
+                const enrollmentData = {
+                    user_id: currentUser.id,
+                    formation_id: formationId,
+                    nom: nomVal,
+                    prenom: prenomVal,
+                    email: currentUser.email,
+                    telephone: phoneVal,
+                    motivation: motivationVal || 'Inscription via le site web officiel',
+                    ...paymentData
+                };
+
+                const { error: insError } = await inscriptions.register(formationId, enrollmentData);
+
+                if (insError) throw insError;
+
+                // Enregistrer les métadonnées de l'utilisateur sur son profil s'ils étaient vides
+                const meta = currentUser.user_metadata || {};
+                if (!meta.nom || !meta.prenom || !meta.telephone) {
+                    await supabase.auth.updateUser({
+                        data: {
+                            nom: nomVal,
+                            prenom: prenomVal,
+                            telephone: phoneVal
+                        }
+                    });
+                    
+                    // Mettre à jour également dans la table publique users
+                    await supabase
+                        .from('users')
+                        .update({
+                            nom: nomVal,
+                            prenom: prenomVal,
+                            telephone: phoneVal
+                        })
+                        .eq('id', currentUser.id);
+                }
+
+                if (paymentData.status === 'acceptee') {
+                    showFeedback("Félicitations ! Votre paiement par MonCash en ligne a été validé instantanément et votre accès au programme de formation est désormais ACTIF.", "success");
+                } else {
+                    showFeedback("Félicitations ! Votre dossier d'inscription avec règlement par MonCash a été transmis avec succès. Notre équipe pédagogique validera l'accès sous 48h après confirmation administrative.", "success");
+                }
+                
+                setTimeout(() => {
+                    window.location.href = 'cours.html';
+                }, 3500);
+
+            } catch (err) {
+                console.error("Erreur d'inscription aux cours :", err);
+                showFeedback("Erreur d'inscription : " + (err.message || "Veuillez réessayer plus tard."), "danger");
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Confirmer mon inscription au programme';
+                submitBtn.style.opacity = '1';
+            }
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('formFeedback');
+            feedback.className = `form-feedback feedback-${type}`;
+            feedback.innerHTML = message;
+            feedback.style.display = 'block';
+        }
+    </script>
+    <script type="module" src="navigation-standalone.js"></script>
+    <script type="module" src="back-button.js"></script>
+</body>
+</html>

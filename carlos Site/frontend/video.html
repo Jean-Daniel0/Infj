@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vidéos du Cours - Institut National de Formation des Jeunes</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="courses.css">
+    <link rel="stylesheet" href="navigation.css">
+    <link rel="stylesheet" href="back-button.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .video-page-container {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Padding seulement si pas de sidebar */
+        body:not(.has-sidebar) .video-page-container {
+            padding: 20px;
+        }
+
+        .course-header {
+            background: linear-gradient(135deg, #003366 0%, #1a3365 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .course-header h2 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+        }
+
+        .course-header p {
+            margin: 0;
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .videos-loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .video-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #003366 0%, #1a3365 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .video-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-thumbnail .play-icon {
+            position: absolute;
+            color: white;
+            font-size: 60px;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-card:hover .play-icon {
+            opacity: 1;
+        }
+
+        .video-number {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #f47c20;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .video-info {
+            padding: 20px;
+        }
+
+        .video-info h3 {
+            color: #003366;
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            line-height: 1.4;
+        }
+
+        .video-meta {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .video-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .video-player-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .video-player-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-player-content {
+            width: 95%;
+            max-width: 1400px;
+            position: relative;
+            margin: 0 auto;
+        }
+
+        /* Responsive mobile */
+        @media (max-width: 640px) {
+            .course-header {
+                padding: 20px 14px;
+            }
+            .course-header h2 {
+                font-size: 24px;
+            }
+            .course-header p {
+                font-size: 16px;
+            }
+            .videos-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 16px;
+            }
+            .video-card {
+                padding: 14px;
+            }
+            .video-meta {
+                font-size: 13px;
+            }
+            .video-stats span {
+                font-size: 12px;
+            }
+            .video-title {
+                font-size: 16px;
+            }
+        }
+
+        .video-player-close {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .video-player-close:hover {
+            background: #c82333;
+        }
+
+        .video-player-container {
+            width: 100%;
+            position: relative;
+            padding-top: 56.25%; /* Ratio 16:9 */
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .video-player-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .video-player-title {
+            color: white;
+            margin-top: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .video-player-description {
+            color: #e6e6e6;
+            margin-top: 12px;
+            font-size: 16px;
+            text-align: center;
+            line-height: 1.6;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            white-space: pre-wrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .empty-state h3 {
+            color: #003366;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #dc3545;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .video-player-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(4, 9, 20, 0.98); /* Cinema dark overlay */
+            z-index: 10000;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .video-player-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Split-screen layout */
+        .video-player-split {
+            display: grid;
+            grid-template-columns: 2.15fr 1fr;
+            background: #0f172a; /* Slate 900 */
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            border: 1px solid #1e293b;
+            min-height: 500px;
+            width: 100%;
+        }
+
+        .video-player-left-panel {
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .video-player-container-custom {
+            width: 100%;
+            position: relative;
+            padding-top: 56.25%; /* Ratio 16:9 */
+            background: #000;
+            overflow: hidden;
+        }
+
+        /* Details sidebar panel */
+        .video-player-right-panel {
+            background: #0f172a;
+            padding: 30px;
+            position: relative;
+            color: #f8fafc;
+            border-left: 1px solid #1e293b;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-y: auto;
+            max-height: 85vh;
+        }
+
+        @media (max-width: 1024px) {
+            .video-player-split {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+            .video-player-right-panel {
+                border-left: none;
+                border-top: 1px solid #1e293b;
+                max-height: none;
+                padding: 20px;
+            }
+            .video-player-modal {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .video-player-modal {
+                padding: 0 !important;
+            }
+            .video-player-split {
+                border-radius: 0 !important;
+                border: none !important;
+            }
+            .video-player-left-panel {
+                border-radius: 0 !important;
+            }
+            .video-player-right-panel {
+                padding: 16px !important;
+            }
+            .video-player-close-btn {
+                top: 12px !important;
+                right: 12px !important;
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 14px !important;
+                background: rgba(15, 23, 42, 0.85) !important;
+                color: #ffffff !important;
+                border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            }
+            #videoModalPlaylistBlock {
+                padding: 12px 15px !important;
+            }
+        }
+
+        /* Fermeture chic */
+        .video-player-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(220, 53, 69, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .video-player-close-btn:hover {
+            background: #dc3545;
+            color: white;
+            box-shadow: 0 0 10px rgba(220, 53, 69, 0.4);
+        }
+
+        .video-institution-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .player-logo-brand {
+            height: 48px;
+            width: auto;
+            object-fit: contain;
+            background: white;
+            padding: 6px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .badge-live {
+            background: #f47c20;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.05em;
+        }
+
+        .video-theme-label {
+            color: #3b82f6;
+            margin: 0 0 8px 0;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+        }
+
+        .video-info-title {
+            color: #ffffff;
+            font-size: 1.4rem;
+            font-family: 'Outfit', sans-serif;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .video-info-description-box {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            margin-bottom: 25px;
+        }
+
+        .video-info-text {
+            color: #cbd5e1;
+            font-size: 0.92rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        /* Custom controls container */
+        .custom-video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            background: #000;
+            overflow: hidden;
+            border-radius: 12px 0 0 12px;
+        }
+
+        @media (max-width: 1024px) {
+            .custom-video-wrapper {
+                border-radius: 12px 12px 0 0;
+            }
+        }
+
+        .custom-video-wrapper:hover .custom-controls-bar {
+            opacity: 1 !important;
+        }
+
+        .video-player-footer-brand {
+            border-top: 1px solid #1e293b;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation sera créée dynamiquement par navigation-standalone.js -->
+
+    <main class="video-page-container">
+        <div class="course-header">
+            <h2 id="courseTitle">Chargement...</h2>
+            <p id="courseDescription">Vidéos du cours</p>
+        </div>
+
+        <div id="videosLoading" class="videos-loading">
+            <p>Chargement des vidéos...</p>
+        </div>
+
+        <div id="videosError" class="error-message" style="display:none;"></div>
+
+        <div id="videosContainer" class="videos-grid" style="display:none;"></div>
+
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <h3>Aucune vidéo disponible</h3>
+            <p>Les vidéos de ce cours seront bientôt disponibles.</p>
+        </div>
+    </main>
+
+    <!-- Modal du lecteur vidéo -->
+    <div id="videoPlayerModal" class="video-player-modal">
+        <div class="video-player-content-wrapper" style="width: 100%; max-width: 1280px; margin: auto; animation: fadeInUp 0.4s ease; outline: none; position: relative;">
+            <div class="video-player-split">
+                <!-- Côté gauche : Lecteur Vidéo Personnalisé -->
+                <div class="video-player-left-panel" style="display: flex; flex-direction: column;">
+                    <div id="videoPlayerContainer" class="video-player-container-custom">
+                        <!-- Inséré dynamiquement par video.js -->
+                    </div>
+                    <!-- Liste des autres modules du cours juste en dessous en format miniatures horizontales -->
+                    <div id="videoModalPlaylistBlock" style="background: #0a0f1d; border-top: 1px solid #1e293b; padding: 15px 20px; box-sizing: border-box;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.8rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 6px;">📖 Progression de la Formation :</h4>
+                        <div id="videoModalPlaylistSlider" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+                            <!-- Inséré dynamiquement par video.js -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Côté droit : Détails et Description du cours -->
+                <div class="video-player-right-panel">
+                    <button class="video-player-close-btn" onclick="closeVideoPlayer()" title="Fermer la vidéo">✕</button>
+                    
+                    <div style="height: 100%; display: flex; flex-direction: column; justify-content: space-between; gap: 20px;">
+                        <div>
+                            <!-- Badge et logo institution -->
+                            <div class="video-institution-header">
+                                <img src="/images/weel_tech_logo.png" alt="WEEL TECH Logo" class="player-logo-brand" />
+                                <span class="badge-live">COURS PRÉMIUM</span>
+                            </div>
+                            
+                            <!-- Titre thématique de formation -->
+                            <h4 id="videoCourseThemeTitle" class="video-theme-label">...</h4>
+                            
+                            <!-- Titre de la session/vidéo -->
+                            <h3 id="videoPlayerTitleCustom" class="video-info-title">...</h3>
+                            
+                            <!-- Description / Notes -->
+                            <div class="video-info-description-box">
+                                <h5 style="margin: 0 0 8px 0; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">CONTENU DU MODULE & DESCRIPTION DU COURS</h5>
+                                <div id="videoPlayerDescriptionCustom" class="video-info-text">...</div>
+                            </div>
+
+                            <!-- Section de Certification / Complétion -->
+                            <div id="certificateClaimContainer" style="display: none; margin-top: 15px; background: linear-gradient(135deg, rgba(40, 167, 69, 0.15) 0%, rgba(0, 51, 102, 0.15) 100%); border: 1px solid rgba(40, 167, 69, 0.3); border-left: 4px solid #28a745; padding: 15px; border-radius: 8px;">
+                                <h5 style="margin: 0 0 8px 0; color: #28a745; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">🏆 Certification de réussite</h5>
+                                <p style="color: #cbd5e1; font-size: 0.8rem; margin: 0 0 12px 0; line-height: 1.4;">Félicitations, vous avez complété les sessions requises pour cette thématique. Réclamez votre diplôme d'aptitude professionnelle.</p>
+                                <button id="claimCertificateBtn" style="width: 100%; background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;" onclick="claimCertificate()">🎓 Réclamer mon certificat</button>
+                                
+                                <div id="claimSpinner" style="display: none; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; color: #4ade80; font-size: 0.8rem; font-weight: bold;">
+                                  <div style="width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #28a745; animation: spin 1s ease-in-out infinite;"></div>
+                                  <span>Génération de votre diplôme officiel...</span>
+                                </div>
+                                <div id="claimResult" style="margin-top: 10px; display: none;"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pied de page de la marque -->
+                        <div class="video-player-footer-brand">
+                            <p style="margin: 0; color: #64748b; font-size: 0.75rem; font-weight: 500;">Propulsé par <strong>WEEL TECH</strong> & Institut National de Formation</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-logos">
+            <div class="footer-logos-row">
+                <img src="/images/AKOLAD.png" alt="Logo AKOLAD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/michel_jd_groupe_ltd.png" alt="Logo Michel-JD Groupe LTD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/weel_tech_logo.png" alt="Logo WEEL TECH" class="footer-logo" referrerPolicy="no-referrer" />
+            </div>
+            <div class="footer-socials">
+                <a href="https://facebook.com" target="_blank" class="footer-social" aria-label="Facebook">
+                    <img src="/images/facebook.png" alt="Facebook" />
+                </a>
+                <a href="https://wa.me/50946341547" target="_blank" class="footer-social" aria-label="WhatsApp">
+                    <img src="/images/whatsapp.webp" alt="WhatsApp" />
+                </a>
+                <a href="mailto:institutnationaldfj@gmail.com" class="footer-social" aria-label="Email">
+                    <img src="/images/email.png" alt="Email" />
+                </a>
+            </div>
+            <p class="footer-copyright">&copy; 2024 Institut National de Formation des Jeunes. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="navigation-standalone.js"></script>
+    <script type="module" src="back-button.js"></script>
+    <script type="module" src="video.js"></script>
+</body>
+</html>
+

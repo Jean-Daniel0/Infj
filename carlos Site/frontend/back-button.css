@@ -1,0 +1,62 @@
+/* Bouton retour intégré et élégant */
+.back-button {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    z-index: 999;
+    background: linear-gradient(135deg, #e06d0f 0%, #f47c20 100%);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(244, 124, 32, 0.35);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+}
+
+.back-button:hover {
+    background: linear-gradient(135deg, #1a3365 0%, #003366 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 51, 102, 0.35);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.back-button svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2.5;
+}
+
+/* Ajustement pour le menu latéral (desktop) */
+body.has-sidebar .back-button {
+    left: 20px;
+    right: auto;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .back-button {
+        top: 22px;
+        right: 12px;
+        padding: 6px 12px;
+        font-size: 11px;
+        border-radius: 16px;
+    }
+}
+
+/* Masquer sur la page d'accueil */
+body.index-page .back-button {
+    display: none;
+}
+
+

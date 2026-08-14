@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact - Institut National de Formation des Jeunes</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="navigation.css">
+    <link rel="stylesheet" href="back-button.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Navigation sera créée dynamiquement par navigation-standalone.js -->
+    <main>
+        <section class="hero">
+            <div class="hero-content" style="justify-content:center;">
+                <div class="hero-text">
+                    <h2>Contactez-nous</h2>
+                    <p>Nous sommes là pour répondre à toutes vos questions !</p>
+                </div>
+            </div>
+        </section>
+        
+        <section>
+            <h2>Informations de contact</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 40px;">
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #f47c20;">
+                    <h3 style="color: #003366; margin-top: 0;">📧 Email</h3>
+                    <p><a href="mailto:institutnationaldfj@gmail.com" style="color: #1a3365; text-decoration: none;">institutnationaldfj@gmail.com</a></p>
+                </div>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #f47c20;">
+                    <h3 style="color: #003366; margin-top: 0;">📞 Téléphone</h3>
+                    <p><a href="tel:+50946341547" style="color: #1a3365; text-decoration: none;">+509 4634 1547</a></p>
+                    <p><a href="tel:+50940732974" style="color: #1a3365; text-decoration: none;">+509 4073 2974</a></p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Envoyez-nous un message</h2>
+            <form id="contactForm" style="width: 100%; max-width: 800px; margin: 0 auto;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <label for="nom" style="display: block; margin-bottom: 5px; font-weight: bold; color: #003366;">Nom :</label>
+                        <input type="text" id="nom" name="nom" required style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                    </div>
+                    <div>
+                        <label for="email" style="display: block; margin-bottom: 5px; font-weight: bold; color: #003366;">Email :</label>
+                        <input type="email" id="email" name="email" required style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label for="sujet" style="display: block; margin-bottom: 5px; font-weight: bold; color: #003366;">Sujet :</label>
+                    <input type="text" id="sujet" name="sujet" required style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label for="message" style="display: block; margin-bottom: 5px; font-weight: bold; color: #003366;">Message :</label>
+                    <textarea id="message" name="message" required rows="6" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; resize: vertical;"></textarea>
+                </div>
+                <button type="submit" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #f47c20 0%, #ff6b35 100%); color: white; border: none; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
+                    Envoyer le message
+                </button>
+                <p id="formMessage" style="text-align: center; margin-top: 15px; font-weight: bold;"></p>
+            </form>
+        </section>
+
+        <section>
+            <h2>Nos réseaux sociaux</h2>
+            <div class="contact-images" style="justify-content: center; margin-top: 30px;">
+                <figure>
+                    <img src="/images/workforce_photos.jpeg" alt="Équipe diversifiée" />
+                </figure>
+                <figure>
+                    <img src="/images/business_photos.jpeg" alt="Professionnalisme" />
+                </figure>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <!-- Logos des partenaires officiels -->
+        <div class="footer-logos">
+            <div class="footer-logos-row">
+                <img src="/images/AKOLAD.png" alt="Logo AKOLAD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/michel_jd_groupe_ltd.png" alt="Logo Michel-JD Groupe LTD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/weel_tech_logo.png" alt="Logo WEEL TECH" class="footer-logo" referrerPolicy="no-referrer" />
+            </div>
+            <div class="footer-socials">
+                <a href="https://facebook.com" target="_blank" class="footer-social" aria-label="Facebook">
+                    <img src="/images/facebook.png" alt="Facebook" />
+                </a>
+                <a href="https://wa.me/50946341547" target="_blank" class="footer-social" aria-label="WhatsApp">
+                    <img src="/images/whatsapp.webp" alt="WhatsApp" />
+                </a>
+                <a href="mailto:institutnationaldfj@gmail.com" class="footer-social" aria-label="Email">
+                    <img src="/images/email.png" alt="Email" />
+                </a>
+            </div>
+            <p class="footer-copyright">&copy; 2024 Institut National de Formation des Jeunes. Tous droits réservés.</p>
+        </div>
+    </footer>
+    <script type="module" src="navigation-standalone.js"></script>
+    <script type="module" src="back-button.js"></script>
+    <script type="module" src="script.js"></script>
+</body>
+</html>
+
+
+

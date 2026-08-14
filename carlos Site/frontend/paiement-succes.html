@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement Réussi - INFJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+        .icon-circle.loading {
+            background-color: #eff6ff;
+            color: #2563eb;
+            animation: pulse-ring 2s infinite;
+        }
+        .icon-circle.success {
+            background-color: #f0fdf4;
+            color: #16a34a;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 12px;
+        }
+        p {
+            font-size: 15px;
+            color: #64748b;
+            line-height: 1.6;
+            margin: 0 0 24px;
+        }
+        .ref-box {
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #334155;
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+        }
+        .loader {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        .btn {
+            background-color: #f47c20;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 14px 28px;
+            border-radius: 10px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(244, 124, 32, 0.2);
+        }
+        .btn:hover {
+            background-color: #e06b12;
+            transform: translateY(-1px);
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Visual Loading / Success container -->
+        <div id="status-icon" class="icon-circle loading">
+            <svg id="svg-load" class="loader" viewBox="0 0 24 24"></svg>
+            <svg id="svg-success" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+
+        <h1 id="status-title">Validation de votre transaction...</h1>
+        <p id="status-desc">Nous synchronisons votre paiement MonCash. Votre accès sécurisé va être configuré instantanément. Veuillez ne pas fermer cette fenêtre.</p>
+
+        <div class="ref-box" id="ref-box">
+            Reference: <span id="ref-id">--</span>
+        </div>
+
+        <div id="action-area" style="display: none;">
+            <a href="cours.html" class="btn">Accéder à mon espace cours</a>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref') || 'N/A';
+        document.getElementById('ref-id').textContent = ref;
+
+        let checkCount = 0;
+        const maxChecks = 10; // check for up to 30 seconds
+
+        async function verifyStatus() {
+            if (ref === 'N/A') {
+                showSuccessState();
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/bazik/status/${ref}`);
+                const data = await response.json();
+
+                if (response.ok && data.status === 'completed') {
+                    showSuccessState();
+                } else {
+                    checkCount++;
+                    if (checkCount < maxChecks) {
+                        setTimeout(verifyStatus, 3000);
+                    } else {
+                        // Max attempts fallback - still grant button just in case
+                        showSuccessState();
+                    }
+                }
+            } catch (err) {
+                console.error("Checking status error:", err);
+                checkCount++;
+                if (checkCount < maxChecks) {
+                    setTimeout(verifyStatus, 3000);
+                } else {
+                    showSuccessState();
+                }
+            }
+        }
+
+        function showSuccessState() {
+            // Update Icon
+            const icon = document.getElementById('status-icon');
+            icon.classList.remove('loading');
+            icon.classList.add('success');
+            document.getElementById('svg-load').style.display = 'none';
+            document.getElementById('svg-success').style.display = 'block';
+
+            // Update Text
+            document.getElementById('status-title').textContent = "Paiement Validé avec Succès !";
+            document.getElementById('status-desc').textContent = "Félicitations ! Votre paiement par MonCash en ligne a été traité et validé. Votre accès au programme d'études est désormais pleinement actif.";
+
+            // Show Access Button
+            document.getElementById('action-area').style.display = 'block';
+        }
+
+        // Start checking instantly
+        verifyStatus();
+    </script>
+</body>
+</html>

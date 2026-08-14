@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institut National de Formation des Jeunes (INFJ)</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="navigation.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Navigation sera créée dynamiquement par navigation-standalone.js -->
+    <main>
+        <!-- 1. Carrousel Héro Interactif et Animé -->
+        <section class="hero-carousel" aria-label="Carrousel d'accueil">
+            <div class="carousel-slides">
+                <!-- Slide 1 -->
+                <div class="carousel-slide active">
+                    <div class="slide-bg-wrapper">
+                        <img src="/images/workforce_photos.jpeg" alt="Formation et Jeunesse INFJ" class="slide-bg-img" referrerPolicy="no-referrer" />
+                        <div class="slide-overlay"></div>
+                    </div>
+                    <div class="slide-content-box">
+                        <span class="carousel-badge">ÉDUCATION & LEADERSHIP</span>
+                        <h2 class="carousel-title">Bienvenue à l'Institut National de Formation des Jeunes</h2>
+                        <p class="carousel-sub">
+                            Une institution engagée dans l'accompagnement, la formation et le développement du potentiel de la jeunesse en Haïti et dans la diaspora.
+                        </p>
+                        <div class="carousel-cta-group">
+                            <a href="#about-infj" class="cta-btn-primary">Découvrir l'INFJ</a>
+                            <a href="contact.html" class="cta-btn-secondary">Nous contacter</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="carousel-slide">
+                    <div class="slide-bg-wrapper">
+                        <img src="/images/business_photos.jpeg" alt="Leadership et Transformation" class="slide-bg-img" referrerPolicy="no-referrer" />
+                        <div class="slide-overlay"></div>
+                    </div>
+                    <div class="slide-content-box">
+                        <span class="carousel-badge">VISION & DEVISE</span>
+                        <h2 class="carousel-title">Former Aujourd'hui, Transformer Demain</h2>
+                        <p class="carousel-sub">
+                            Façonner des citoyens compétents, éthiques et engagés pour impulser un développement social et économique durable.
+                        </p>
+                        <div class="carousel-cta-group">
+                            <a href="#vision-mission" class="cta-btn-primary">Vision & Mission</a>
+                            <a href="#piliers" class="cta-btn-secondary">Nos Piliers</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="carousel-slide">
+                    <div class="slide-bg-wrapper">
+                        <img src="/images/office.jpeg" alt="Excellence Académique" class="slide-bg-img" referrerPolicy="no-referrer" />
+                        <div class="slide-overlay"></div>
+                    </div>
+                    <div class="slide-content-box">
+                        <span class="carousel-badge">EXCELLENCE & IMPACT</span>
+                        <h2 class="carousel-title">Un Modèle d'Inclusion et d'Innovation</h2>
+                        <p class="carousel-sub">
+                            Accompagner chaque jeune vers la réussite personnelle, académique et professionnelle grâce à un encadrement d'excellence.
+                        </p>
+                        <div class="carousel-cta-group">
+                            <a href="#objectifs" class="cta-btn-primary">Nos Objectifs</a>
+                            <a href="#galerie" class="cta-btn-secondary">Galerie Photos</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4 -->
+                <div class="carousel-slide">
+                    <div class="slide-bg-wrapper">
+                        <img src="/images/handshake_deal.jpeg" alt="Réseau et Partenariats" class="slide-bg-img" referrerPolicy="no-referrer" />
+                        <div class="slide-overlay"></div>
+                    </div>
+                    <div class="slide-content-box">
+                        <span class="carousel-badge">RÉSEAU & PARTENARIATS</span>
+                        <h2 class="carousel-title">Engagement pour Haïti et la Diaspora</h2>
+                        <p class="carousel-sub">
+                            Créer des synergies durables et promouvoir un réseau solidaire au service de la jeunesse et des collectivités.
+                        </p>
+                        <div class="carousel-cta-group">
+                            <a href="#partenaires" class="cta-btn-primary">Nos Partenaires</a>
+                            <a href="contact.html" class="cta-btn-secondary">Rejoindre le Réseau</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controles du Carrousel -->
+            <button class="carousel-arrow prev" aria-label="Diapositive précédente">&#10094;</button>
+            <button class="carousel-arrow next" aria-label="Diapositive suivante">&#10095;</button>
+            <div class="carousel-dots"></div>
+        </section>
+
+        <!-- 2. Bar de Chiffres Clés & Impact -->
+        <section class="stats-bar-section">
+            <div class="stats-bar-grid">
+                <div class="stat-card">
+                    <div class="stat-number">INFJ</div>
+                    <div class="stat-label">Fondé par Me Robertho Carlos Deronceray</div>
+                </div>
+                <div class="stat-card accent-orange">
+                    <div class="stat-number">Haïti & Diaspora</div>
+                    <div class="stat-label">Rayonnement National et International</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Engagement Citoyen & Éthique</div>
+                </div>
+                <div class="stat-card accent-orange">
+                    <div class="stat-number">Avenir</div>
+                    <div class="stat-label">Leadership et Innovation Éducative</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. À propos de l'INFJ -->
+        <section id="about-infj">
+            <div class="premium-about-card">
+                <div class="about-text-content">
+                    <h2>Institut National de Formation des Jeunes (INFJ)</h2>
+                    <p class="about-lead">
+                        Créé par <strong>Me Robertho Carlos Deronceray</strong>, l'Institut National de Formation des Jeunes (INFJ) est une institution éducative dynamique,
+                        engagée dans la formation, l'accompagnement et le développement du potentiel des jeunes en Haïti et dans la diaspora.
+                    </p>
+                    <p class="about-sub">
+                        L'INFJ se positionne comme un acteur clé de la transformation sociale et économique du pays à travers l'éducation, 
+                        la formation professionnelle et le leadership des jeunes.
+                    </p>
+                </div>
+                <div class="about-visual-wrapper">
+                    <img src="/images/business_photos.jpeg" alt="Institut National de Formation des Jeunes" class="about-visual-img" referrerPolicy="no-referrer" />
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Vision & Mission -->
+        <div class="bento-grid-2" id="vision-mission">
+            <section class="card-blue-accent">
+                <h2>Vision</h2>
+                <p class="bento-text">
+                    Devenir, en Haïti et dans la diaspora, une référence nationale et internationale en matière de formation, de leadership et d'innovation éducative,
+                    contribuant à l'émergence d'une jeunesse consciente, compétente et engagée.
+                </p>
+            </section>
+
+            <section class="card-orange-accent">
+                <h2>Mission</h2>
+                <p class="bento-text">
+                    Former, encadrer et accompagner les jeunes dans leur parcours personnel, académique et professionnel, à travers des programmes d'apprentissage accessibles,
+                    innovants et de grande qualité, adaptés aux réalités haïtiennes et mondiales.
+                </p>
+            </section>
+        </div>
+
+        <!-- 5. Devise Institutionnelle -->
+        <section class="devise-card">
+            <h2>Devise</h2>
+            <p id="devise" class="devise-text-glow">
+                Former aujourd'hui, transformer demain.
+            </p>
+        </section>
+
+        <!-- 6. Objectifs & Cadre d'Action -->
+        <div class="bento-grid-2" id="objectifs">
+            <section class="card-blue-accent" style="padding: 35px !important;">
+                <h2>Objectifs institutionnels</h2>
+                <ol class="objectifs-list">
+                    <li>Former des jeunes compétents, responsables et engagés.</li>
+                    <li>Offrir un cadre adapté aux réalités d'Haïti et de la diaspora.</li>
+                    <li>Renforcer les compétences techniques, managériales et humaines.</li>
+                    <li>Promouvoir l'inclusion et l'égalité des chances.</li>
+                    <li>Développer le leadership, l'éthique et la responsabilité citoyenne.</li>
+                </ol>
+            </section>
+
+            <section class="card-orange-accent" style="padding: 35px !important;">
+                <h2>Périmètre d'action</h2>
+                <ul class="niveaux-list">
+                    <li>Programmes certifiants et ateliers de renforcement.</li>
+                    <li>Parcours d'accompagnement au leadership et au développement personnel.</li>
+                    <li>Partenariats académiques et universitaires à l'échelle nationale et internationale.</li>
+                </ul>
+            </section>
+        </div>
+
+        <!-- 7. Valeurs fondamentales -->
+        <section>
+            <h2>Valeurs fondamentales</h2>
+            <div class="premium-values-grid">
+                <div class="value-pill orange">Engagement</div>
+                <div class="value-pill blue">Excellence</div>
+                <div class="value-pill orange">Innovation</div>
+                <div class="value-pill blue">Responsabilité</div>
+                <div class="value-pill orange">Solidarité</div>
+                <div class="value-pill blue">Leadership</div>
+                <div class="value-pill orange">Inclusion</div>
+            </div>
+        </section>
+
+        <!-- 8. Piliers d'Action Institutionnelle -->
+        <section id="piliers">
+            <h2>Piliers d'action de l'INFJ</h2>
+            <div class="piliers-grid">
+                <div class="pilier-card">
+                    <span class="pilier-icon">🏛️</span>
+                    <h3>Encadrement & Leadership</h3>
+                    <p>Développement de l'éthique, de la responsabilisation citoyenne et de la capacité de prise d'initiative chez les jeunes cadres et étudiants.</p>
+                </div>
+                <div class="pilier-card orange-top">
+                    <span class="pilier-icon">🤝</span>
+                    <h3>Réseau & Partenariats</h3>
+                    <p>Synergies stratégiques avec les acteurs éducatifs, professionnels et communautaires en Haïti et au sein de la diaspora.</p>
+                </div>
+                <div class="pilier-card">
+                    <span class="pilier-icon">🌐</span>
+                    <h3>Inclusion & Impact Social</h3>
+                    <p>Mise en place d'actions et de programmes favorisant l'égalité des chances, la solidarité et le rayonnement culturel.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Galerie Photos Institutionnelle -->
+        <section id="galerie">
+            <h2>L'Institut en images</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item">
+                    <img src="/images/workforce_photos.jpeg" alt="L'équipe et les espaces de l'INFJ" referrerPolicy="no-referrer" />
+                    <div class="gallery-caption">Équipes et Séances d'Encadrement</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="/images/business_photos.jpeg" alt="Sessions de formation et rencontres" referrerPolicy="no-referrer" />
+                    <div class="gallery-caption">Rencontres & Échanges de Leadership</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="/images/office.jpeg" alt="Espaces de travail et d'apprentissage" referrerPolicy="no-referrer" />
+                    <div class="gallery-caption">Espaces de Travail & Innovation</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="/images/handshake_deal.jpeg" alt="Signature de partenariats institutionnels" referrerPolicy="no-referrer" />
+                    <div class="gallery-caption">Partenariats & Collaborations</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="/images/pullman_toulouse.jpeg" alt="Conférences et événements" referrerPolicy="no-referrer" />
+                    <div class="gallery-caption">Événements & Rayonnement</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. Partenaires Officiels -->
+        <section id="partenaires">
+            <h2>Nos Partenaires Officiels</h2>
+            <div class="footer-logos-row" style="justify-content: center; margin-top: 20px;">
+                <img src="/images/AKOLAD.png" alt="Logo AKOLAD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/michel_jd_groupe_ltd.png" alt="Logo Michel-JD Groupe LTD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/weel_tech_logo.png" alt="Logo WEEL TECH" class="footer-logo" referrerPolicy="no-referrer" />
+            </div>
+        </section>
+
+        <!-- 11. Section Contact & Engagement -->
+        <section class="premium-cta-section">
+            <h2>En savoir plus ou échanger avec l'INFJ ?</h2>
+            <p>Notre équipe est à votre disposition pour toute information concernant nos missions, nos projets et nos partenariats.</p>
+            <div class="cta-button-group">
+                <a href="contact.html" class="cta-btn-primary">
+                    Nous contacter
+                </a>
+                <a href="mailto:institutnationaldfj@gmail.com" class="cta-btn-secondary">
+                    Envoyer un courriel
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-logos">
+            <div class="footer-logos-row">
+                <img src="/images/AKOLAD.png" alt="Logo AKOLAD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/michel_jd_groupe_ltd.png" alt="Logo Michel-JD Groupe LTD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/weel_tech_logo.png" alt="Logo WEEL TECH" class="footer-logo" referrerPolicy="no-referrer" />
+            </div>
+            <div class="footer-socials">
+                <a href="https://facebook.com" target="_blank" class="footer-social" aria-label="Facebook">
+                    <img src="/images/facebook.png" alt="Facebook" />
+                </a>
+                <a href="https://wa.me/50946341547" target="_blank" class="footer-social" aria-label="WhatsApp">
+                    <img src="/images/whatsapp.webp" alt="WhatsApp" />
+                </a>
+                <a href="mailto:institutnationaldfj@gmail.com" class="footer-social" aria-label="Email">
+                    <img src="/images/email.png" alt="Email" />
+                </a>
+            </div>
+            <p class="footer-copyright">&copy; 2024 Institut National de Formation des Jeunes. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="navigation-standalone.js"></script>
+    <script type="module" src="homepage-carousel.js"></script>
+    <script type="module" src="script.js"></script>
+</body>
+</html> 

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Cours - Institut National de Formation des Jeunes</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="courses.css">
+    <link rel="stylesheet" href="navigation.css">
+    <link rel="stylesheet" href="back-button.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Navigation sera créée dynamiquement par navigation-standalone.js -->
+
+    <main class="courses-main">
+        <!-- Section de bienvenue -->
+        <section class="welcome-section">
+            <div class="welcome-content">
+                <h2>Bienvenue dans votre espace de formation</h2>
+                <p id="userWelcome">Bonjour, <span id="userName">Utilisateur</span> !</p>
+            </div>
+        </section>
+
+        <!-- Section des formations d'un étudiant avec onglets -->
+        <section class="courses-section">
+            <div class="courses-tabs-header" style="display: flex; gap: 15px; border-bottom: 2px solid #e2e8f0; margin-bottom: 25px; padding-bottom: 5px;">
+                <button class="course-tab-btn active" id="tabInprogressBtn" style="background: none; border: none; font-size: 1.15rem; font-weight: 800; color: #003366; padding: 10px 16px; cursor: pointer; position: relative; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+                    Mes Formations en Cours <span id="countInprogress" class="tab-badge" style="background: #e0f2fe; color: #003366; font-size: 0.78rem; font-weight: 700; padding: 2px 8px; border-radius: 12px;">0</span>
+                </button>
+                <button class="course-tab-btn" id="tabCompletedBtn" style="background: none; border: none; font-size: 1.15rem; font-weight: 800; color: #64748b; padding: 10px 16px; cursor: pointer; position: relative; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+                    Formations Déjà Suivies <span id="countCompleted" class="tab-badge" style="background: #f1f5f9; color: #64748b; font-size: 0.78rem; font-weight: 700; padding: 2px 8px; border-radius: 12px;">0</span>
+                </button>
+            </div>
+
+            <div id="activeCourses" class="courses-list-layout">
+                <!-- Les cours seront chargés dynamiquement -->
+                <div class="loading-state" style="text-align: center; padding: 20px; color: #64748b;">
+                    Connexion en cours, chargement de vos formations...
+                </div>
+            </div>
+
+            <div id="completedCoursesList" class="courses-list-layout" style="display: none;">
+                <!-- Les formations terminées s'affichent ici -->
+                <div class="loading-state" style="text-align: center; padding: 20px; color: #64748b;">
+                    Chargement de vos formations terminées...
+                </div>
+            </div>
+        </section>
+
+        <!-- Section des cours disponibles -->
+        <section class="available-courses-section">
+            <h2>Nos Programmes de Formation</h2>
+            <div id="availableCourses" class="courses-list-layout">
+                <!-- Les programmes disponibles seront chargés dynamiquement -->
+                <div class="loading-state" style="text-align: center; padding: 20px; color: #64748b;">
+                    Chargement des programmes de formation disponibles...
+                </div>
+            </div>
+        </section>
+
+        <!-- Section des certificats -->
+        <section class="certificates-section">
+            <h2>Mes Certificats</h2>
+            <div id="certificates" class="certificates-grid">
+                <!-- Les certificats d'études officiels seront chargés dynamiquement -->
+                <div class="loading-state" style="text-align: center; padding: 20px; grid-column: 1 / -1; color: #64748b;">
+                    Chargement de vos certificats officiels...
+                </div>
+            </div>
+        </section>
+
+        <!-- Section des statistiques -->
+        <section class="stats-section">
+            <h2>Mes Statistiques</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-info">
+                        <h3 id="statEnrolled">--</h3>
+                        <p>Formations suivies</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-info">
+                        <h3 id="statHours">--</h3>
+                        <p>Temps d'étude</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-info">
+                        <h3 id="statCertificates">--</h3>
+                        <p>Certificats obtenus</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-info">
+                        <h3 id="statScore">--</h3>
+                        <p>Score moyen</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-logos">
+            <div class="footer-logos-row">
+                <img src="/images/AKOLAD.png" alt="Logo AKOLAD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/michel_jd_groupe_ltd.png" alt="Logo Michel-JD Groupe LTD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/weel_tech_logo.png" alt="Logo WEEL TECH" class="footer-logo" referrerPolicy="no-referrer" />
+            </div>
+            <div class="footer-socials">
+                <a href="https://facebook.com" target="_blank" class="footer-social" aria-label="Facebook">
+                    <img src="/images/facebook.png" alt="Facebook" />
+                </a>
+                <a href="https://wa.me/50946341547" target="_blank" class="footer-social" aria-label="WhatsApp">
+                    <img src="/images/whatsapp.webp" alt="WhatsApp" />
+                </a>
+                <a href="mailto:institutnationaldfj@gmail.com" class="footer-social" aria-label="Email">
+                    <img src="/images/email.png" alt="Email" />
+                </a>
+            </div>
+            <p class="footer-copyright">&copy; 2024 Institut National de Formation des Jeunes. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="navigation-standalone.js"></script>
+    <script type="module" src="back-button.js"></script>
+    <script type="module" src="courses.js"></script>
+</body>
+</html>

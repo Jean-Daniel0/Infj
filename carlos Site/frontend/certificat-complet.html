@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certificat de réussite — INFJ</title>
+
+  <!-- Script CDN Supabase & html2pdf.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+    .cert-signature-fallback {
+      font-family: 'Alex Brush', cursive;
+      font-size: 2.3rem;
+      color: #0b2240;
+      opacity: 0.9;
+      transform: rotate(-4deg);
+      line-height: 1;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-shadow: 1px 1px 1px rgba(0,0,0,0.05);
+      user-select: none;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #f0f0f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── CERTIFICATE CARD ── */
+    .cert {
+      width: 842px;         /* A4 landscape px approx */
+      height: 595px;
+      min-height: 595px;
+      max-height: 595px;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 44px 60px 32px;
+      text-align: center;
+      color: #003366;
+    }
+
+    /* ── THICK LEFT ACCENT BAR ── */
+    .cert::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 12px;
+      background: #003366;
+    }
+
+    /* ── CORNER ORNAMENT (top-right) ── */
+    .cert::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 140px; height: 140px;
+      background: #f47c20;
+      clip-path: polygon(100% 0, 0 0, 100% 100%);
+      opacity: 0.1;
+    }
+
+    /* ── OUTER BORDER ── */
+    .cert-border {
+      position: absolute;
+      inset: 14px;
+      border: 2px solid #003366;
+      pointer-events: none;
+      opacity: 0.2;
+    }
+    .cert-border-inner {
+      position: absolute;
+      inset: 18px;
+      border: 0.75px solid #f47c20;
+      pointer-events: none;
+      opacity: 0.3;
+    }
+
+    /* ── BACKGROUND PATTERN ── */
+    .cert-pattern {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(0, 51, 102, 0.05) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+    }
+
+    /* ── WATERMARK ── */
+    .cert-watermark {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0.03;
+    }
+    .cert-watermark span {
+      font-family: 'Playfair Display', serif;
+      font-size: 110px;
+      font-weight: 700;
+      color: #003366;
+      letter-spacing: 12px;
+      transform: rotate(-22deg);
+      white-space: nowrap;
+    }
+
+    /* ── CONTENT LAYER ── */
+    .cert-content {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ── LOGO ZONE ── */
+    .cert-logo-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 5px;
+    }
+    .cert-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .cert-logo img {
+      height: 48px;
+      object-fit: contain;
+    }
+    .cert-logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 21px;
+      font-weight: 700;
+      color: #003366;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .cert-tagline {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #f47c20;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* ── DIVIDER ── */
+    .cert-divider {
+      width: 120px;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, #f47c20, transparent);
+      margin: 12px auto;
+    }
+
+    /* ── PRE-TITLE ── */
+    .cert-pretitle {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #64748b;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    /* ── STUDENT NAME ── */
+    .cert-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 38px;
+      font-weight: 700;
+      font-style: italic;
+      color: #003366;
+      margin: 8px 0;
+      line-height: 1.1;
+      text-shadow: 1px 1px 1px rgba(0,0,0,0.02);
+    }
+
+    /* ── BODY TEXT ── */
+    .cert-body {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: #334155;
+      line-height: 1.5;
+      margin: 8px 0;
+      max-width: 600px;
+    }
+    .cert-course {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #003366;
+      display: block;
+      margin-top: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── INFO PILLS ── */
+    .cert-pills {
+      display: flex;
+      gap: 36px;
+      justify-content: center;
+      margin: 12px 0;
+    }
+    .cert-pill {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .cert-pill-label {
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #64748b;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+    }
+    .cert-pill-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: #003366;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── SIGNATURES ── */
+    .cert-sigs {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      gap: 40px;
+      margin: 15px 0 5px;
+    }
+    .cert-sig-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      max-width: 220px;
+    }
+    .cert-sig-block img {
+      height: 48px;
+      object-fit: contain;
+      margin-bottom: 4px;
+    }
+    .cert-sig-placeholder {
+      height: 48px;
+      width: 100%;
+      margin-bottom: 4px;
+    }
+    .cert-sig-line {
+      width: 100%;
+      height: 1px;
+      background: #cbd5e1;
+      margin-bottom: 4px;
+    }
+    .cert-sig-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: #003366;
+      font-family: 'Inter', sans-serif;
+    }
+    .cert-sig-role {
+      font-size: 9px;
+      color: #64748b;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── FOOTER ── */
+    .cert-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      border-top: 0.5px solid rgba(0, 51, 102, 0.12);
+      padding-top: 8px;
+      font-size: 9px;
+      color: #64748b;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── CORNER DOTS ── */
+    .cert-dot {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #003366;
+      opacity: 0.3;
+    }
+    .cert-dot.tl { top: 26px; left: 26px; }
+    .cert-dot.tr { top: 26px; right: 26px; }
+    .cert-dot.bl { bottom: 26px; left: 26px; }
+    .cert-dot.br { bottom: 26px; right: 26px; }
+  </style>
+</head>
+<body>
+
+<div class="cert" id="certificat">
+
+  <!-- Decorative layers -->
+  <div class="cert-border"></div>
+  <div class="cert-border-inner"></div>
+  <div class="cert-pattern"></div>
+  <div class="cert-watermark"><span>OFFICIEL</span></div>
+  <div class="cert-dot tl"></div>
+  <div class="cert-dot tr"></div>
+  <div class="cert-dot bl"></div>
+  <div class="cert-dot br"></div>
+
+  <!-- Content -->
+  <div class="cert-content">
+
+    <!-- Logo -->
+    <div class="cert-logo-container">
+      <div class="cert-logo" style="display: flex; align-items: center; justify-content: center;">
+        <img id="img-logo-infj" src="/images/logo.png" alt="Logo INFJ" onerror="if (window.handleLogoError) { window.handleLogoError(this, 'infj'); } else { this.onerror=null; this.src='https://nnppbnqavajmublpfhkj.supabase.co/storage/v1/object/public/videos/logo.png'; }" style="height: 52px; object-fit: contain;" />
+      </div>
+      <div class="cert-logo-text" style="font-size: 19px; margin-top: 8px;">Institut National de Formation des Jeunes</div>
+      <div class="cert-tagline" style="letter-spacing: 2px;">RÉPUBLIQUE D'HAÏTI</div>
+    </div>
+
+    <div class="cert-divider"></div>
+
+    <div class="cert-pretitle">Certificat officiel d'aptitude professionnelle</div>
+
+    <!-- Nom de l'élève — VARIABLE -->
+    <div class="cert-name" id="cert-name">{{NOM}}</div>
+
+    <!-- Texte central -->
+    <div class="cert-body">
+      Pour avoir accompli l'intégralité du programme académique prescrit et brillamment validé le cycle de contrôle des aptitudes de la formation en :
+      <span class="cert-course" id="cert-course">« {{COURS}} »</span>
+    </div>
+
+    <!-- Infos -->
+    <div class="cert-pills">
+      <div class="cert-pill">
+        <span class="cert-pill-label">Durée d'études</span>
+        <span class="cert-pill-value" id="cert-duree">{{DUREE}}</span>
+      </div>
+      <div class="cert-pill">
+        <span class="cert-pill-label">Date d'émission</span>
+        <span class="cert-pill-value" id="cert-date">{{DATE}}</span>
+      </div>
+      <div class="cert-pill">
+        <span class="cert-pill-label">ID Certification</span>
+        <span class="cert-pill-value" id="cert-id" style="color: #f47c20;">{{CERT_ID}}</span>
+      </div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="cert-sigs">
+      <div class="cert-sig-block">
+        <div id="sig1-img-container" style="height: 48px; width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 4px;">
+          <div class="cert-sig-placeholder" style="display: flex; align-items: center; justify-content: center; font-size: 1.8rem; opacity: 0.18; color: #003366;">🏛️</div>
+        </div>
+        <div class="cert-sig-line"></div>
+        <div class="cert-sig-name" id="sig1-name">Me Robertho Carlos Deronceray</div>
+        <div class="cert-sig-role" id="sig1-role">Directeur fondateur</div>
+      </div>
+      <div class="cert-sig-block">
+        <div id="sig2-img-container" style="height: 48px; width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 4px;">
+          <div class="cert-sig-placeholder" style="display: flex; align-items: center; justify-content: center; font-size: 1.8rem; opacity: 0.18; color: #003366;">📝</div>
+        </div>
+        <div class="cert-sig-line"></div>
+        <div class="cert-sig-name" id="sig2-name">{{SIG2_NOM}}</div>
+        <div class="cert-sig-role" id="sig2-role">{{SIG2_ROLE}}</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="cert-footer">
+      <span>Institut National de Formation des Jeunes — République d'Haïti</span>
+      <span id="cert-footer-id">N° {{CERT_ID}}</span>
+      <span id="cert-footer-date">Fait à Port-au-Prince le, {{DATE}}</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Gestion résiliente des images pour la génération de PDF
+  window.handleLogoError = function(img, type) {
+    console.warn(`[Certificat Complet] Erreur de chargement sur l'image ${type}, activation du fallback élégant.`);
+    img.style.display = 'none';
+    
+    // Éviter d'ajouter plusieurs fallbacks
+    const fallbackId = `fallback-logo-${type}`;
+    if (document.getElementById(fallbackId)) return;
+
+    const fallback = document.createElement('div');
+    fallback.id = fallbackId;
+    if (type === 'infj') {
+      fallback.innerHTML = `<span style="font-size: 22px; font-weight: bold; font-family: 'Times New Roman', 'Georgia', serif; letter-spacing: 2px;">I.N.F.J</span>`;
+      fallback.style.cssText = 'height: 48px; display: flex; align-items: center; justify-content: center; color: #003366; font-weight: bold;';
+    } else {
+      fallback.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1;"><span style="font-size: 14px; font-weight: 800; font-family: 'Arial', sans-serif; letter-spacing: 1px;">MICHEL-JD</span><span style="font-size: 8px; font-weight: bold; letter-spacing: 1.5px; opacity: 0.75;">GROUPE LTD</span></div>`;
+      fallback.style.cssText = 'height: 48px; display: flex; align-items: center; justify-content: center; color: #003366;';
+    }
+    img.parentNode.insertBefore(fallback, img);
+  };
+
+  // Convertir les chemins en provenance du bucket public "images_s" sur Supabase
+  document.addEventListener('DOMContentLoaded', () => {
+    const supabaseBucketUrl = 'https://nnppbnqavajmublpfhkj.supabase.co/storage/v1/object/public/images_s/';
+    const origin = window.location.origin;
+    
+    document.querySelectorAll('img').forEach(img => {
+      const src = img.getAttribute('src');
+      if (src && src.includes('images/')) {
+        const filename = src.split('images/').pop();
+        const fallbackUrl = origin + src;
+        
+        // Liste ordonnée de tentatives sur le bucket
+        const attempts = [];
+        attempts.push(filename);
+        
+        const lowerFilename = filename.toLowerCase();
+        if (lowerFilename !== filename) {
+          attempts.push(lowerFilename);
+        }
+        
+        const dotIndex = filename.lastIndexOf('.');
+        if (dotIndex !== -1) {
+          const base = filename.substring(0, dotIndex);
+          const ext = filename.substring(dotIndex).toLowerCase();
+          const baseLower = base.toLowerCase();
+          
+          const altExts = [];
+          if (ext === '.webp') altExts.push('.png', '.svg', '.jpeg', '.jpg');
+          else if (ext === '.png') altExts.push('.svg', '.webp', '.jpeg', '.jpg');
+          else if (ext === '.svg') altExts.push('.png', '.webp');
+          else if (ext === '.jpeg' || ext === '.jpg') altExts.push('.png', '.webp');
+          
+          for (const ae of altExts) {
+            attempts.push(base + ae);
+            attempts.push(baseLower + ae);
+          }
+        }
+        
+        const uniqueAttempts = [...new Set(attempts)];
+        let attemptIndex = 0;
+        
+        const tryNextAttempt = () => {
+          if (attemptIndex < uniqueAttempts.length) {
+            const currentAttempt = uniqueAttempts[attemptIndex];
+            attemptIndex++;
+            img.src = supabaseBucketUrl + currentAttempt;
+          } else {
+            // Si aucun fichier dans le bucket n'a fonctionné, retour au fallback local ou logo textuel
+            console.warn(`[Certificat Image] Aucun fichier correspondant trouvé pour ${filename} sur Supabase images_s. Fallback local.`);
+            img.src = fallbackUrl;
+            img.onerror = () => {
+              if (window.handleLogoError) {
+                window.handleLogoError(img, filename.includes('logo') ? 'infj' : 'mjd');
+              }
+            };
+          }
+        };
+        
+        img.onerror = () => {
+          tryNextAttempt();
+        };
+        
+        tryNextAttempt();
+      }
+    });
+  });
+
+  // Initialisation Supabase Client localement s'il n'est pas déjà configuré sur window par le parent
+  const supabaseUrlPref = 'https://nnppbnqavajmublpfhkj.supabase.co';
+  const supabaseAnonKeyPref = 'sb_publishable_kYqjUg-ftxahv35qUaDdpA_CMkJdwL-';
+
+  let localSupabaseClient = null;
+  function getSupabase() {
+    if (!localSupabaseClient) {
+      // 1. Check window.parent.supabaseClient or window.supabaseClient first (this is the actual initialized client)
+      const parentClient = window.parent && window.parent.supabaseClient;
+      const currentClient = window.supabaseClient;
+      
+      if (parentClient && typeof parentClient.from === 'function') {
+        localSupabaseClient = parentClient;
+      } else if (currentClient && typeof currentClient.from === 'function') {
+        localSupabaseClient = currentClient;
+      } else {
+        // 2. If no direct client, check if window.parent.supabase is actually initialized
+        const parentSup = window.parent && window.parent.supabase;
+        if (parentSup && typeof parentSup.from === 'function') {
+          localSupabaseClient = parentSup;
+        } else {
+          // 3. Fallback: Initialize our own instance from the global CDN library namespace
+          const sdk = window.supabase || (window.parent && window.parent.supabase);
+          if (sdk && typeof sdk.createClient === 'function') {
+            localSupabaseClient = sdk.createClient(supabaseUrlPref, supabaseAnonKeyPref);
+          }
+        }
+      }
+    }
+    return localSupabaseClient;
+  }
+
+  /**
+   * 1. Récupère les données d'inscription et de formation depuis Supabase
+   */
+  window.genererCertificat = async function(inscriptionId) {
+    console.log("[Certificat Complet] genererCertificat pour l'inscription :", inscriptionId);
+    
+    const client = getSupabase();
+    if (!client) throw new Error("Client Supabase introuvable.");
+
+    // Récupérer l'inscription
+    const { data: inscription, error: insErr } = await client
+      .from('inscriptions')
+      .select('*')
+      .eq('id', inscriptionId)
+      .single();
+      
+    if (insErr) throw new Error("Impossible de récupérer l'inscription : " + insErr.message);
+    if (!inscription) throw new Error("Inscription introuvable.");
+
+    // Récupérer la formation associée
+    const { data: formation, error: formErr } = await client
+      .from('formations')
+      .select('*')
+      .eq('id', inscription.formation_id || inscription.course_id)
+      .single();
+
+    if (formErr) throw new Error("Impossible de récupérer la formation : " + formErr.message);
+    if (!formation) throw new Error("Formation introuvable.");
+
+    const todayStr = new Date().toISOString();
+    const uniqueNumber = `CERT-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
+    const studentFullName = inscription.nom_complet || `${inscription.prenom || ''} ${inscription.nom || ''}`.trim() || 'Étudiant';
+
+    // Backwards compatibility if flat columns are null or empty
+    const metaModules = (typeof formation.modules === 'object' && formation.modules) ? formation.modules : {};
+    const dynamicFormateurNom = formation.formateur_nom || metaModules.formateur_nom || 'Jean-Daniel Michel';
+    const dynamicFormateurRole = formation.formateur_role || metaModules.formateur_role || "Formateur d'Aptitude";
+
+    return {
+      inscriptionId: inscription.id,
+      formationId: formation.id,
+      nom: studentFullName.toUpperCase(),
+      cours: formation.titre,
+      duree: formation.duree || '30 heures',
+      dateCompletion: todayStr,
+      certId: uniqueNumber,
+      sig2_nom: dynamicFormateurNom,
+      sig2_role: dynamicFormateurRole,
+      email: inscription.email,
+      formateur_signature: metaModules.formateur_signature || '',
+      director_signature: metaModules.director_signature || ''
+    };
+  };
+
+  /**
+   * 2. Injecte les données dans le DOM du certificat
+   */
+  window.remplirCertificat = function(data) {
+    console.log("[Certificat Complet] Remplissage du certificat :", data);
+    
+    document.getElementById('cert-name').textContent = data.nom;
+    document.getElementById('cert-course').textContent = `« ${data.cours} »`;
+    document.getElementById('cert-duree').textContent = data.duree;
+
+    const formattedDate = new Date(data.dateCompletion).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    document.getElementById('cert-date').textContent = formattedDate;
+    document.getElementById('cert-id').textContent = data.certId;
+    document.getElementById('sig2-name').textContent = data.sig2_nom;
+    document.getElementById('sig2-role').textContent = data.sig2_role;
+    document.getElementById('cert-footer-id').textContent = `N° ${data.certId}`;
+    document.getElementById('cert-footer-date').textContent = `Fait à Port-au-Prince le, ${formattedDate}`;
+
+    // Insertion des images des signatures
+    const sig1Container = document.getElementById('sig1-img-container');
+    if (sig1Container) {
+      if (data.director_signature) {
+        sig1Container.innerHTML = `<img src="${data.director_signature}" alt="Signature Directeur" style="height: 48px; max-width: 100%; object-fit: contain; transform: scale(1.15);" />`;
+      } else {
+        sig1Container.innerHTML = `<div class="cert-signature-fallback">Me Robertho Carlos D.</div>`;
+      }
+    }
+
+    const sig2Container = document.getElementById('sig2-img-container');
+    if (sig2Container) {
+      if (data.formateur_signature) {
+        sig2Container.innerHTML = `<img src="${data.formateur_signature}" alt="Signature Formateur" style="height: 48px; max-width: 100%; object-fit: contain; transform: scale(1.15);" />`;
+      } else {
+        const trainerName = data.sig2_nom || "Formateur INFJ";
+        sig2Container.innerHTML = `<div class="cert-signature-fallback">${trainerName}</div>`;
+      }
+    }
+  };
+
+  /**
+   * 3. Convertit le div du certificat en Blob PDF avec html2pdf.js
+   */
+  window.genererPDF = async function(certId) {
+    console.log("[Certificat Complet] genererPDF pour id :", certId);
+    
+    // Attendre que les polices Google soient chargées
+    await document.fonts.ready;
+    // Délai supplémentaire de 800ms
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    const element = document.getElementById('certificat');
+    element.style.width  = '842px';
+    element.style.height = '595px';
+
+    const options = {
+      margin: 0,
+      filename: `${certId}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2, // Haute résolution
+        useCORS: true,
+        logging: false,
+        width: 842,
+        height: 595
+      },
+      jsPDF: {
+        unit: 'px',
+        format: [842, 595],
+        orientation: 'landscape'
+      }
+    };
+
+    const blob = await html2pdf().set(options).from(element).outputPdf('blob');
+    return blob;
+  };
+
+  /**
+   * 4. Upload le Blob PDF dans le bucket public "certificats" sur Supabase Storage
+   */
+  window.uploadPDF = async function(blob, certId, inscriptionId) {
+    console.log("[Certificat Complet] uploadPDF pour l'inscription :", inscriptionId);
+    
+    const client = getSupabase();
+    if (!client) throw new Error("Client Supabase introuvable.");
+
+    const filePath = `${inscriptionId}/${certId}.pdf`;
+
+    const { data, error } = await client.storage
+      .from('certificats')
+      .upload(filePath, blob, {
+        contentType: 'application/pdf',
+        upsert: true
+      });
+
+    if (error) throw new Error("Upload PDF dans Supabase Storage échoué : " + error.message);
+
+    const { data: urlData } = client.storage
+      .from('certificats')
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
+  };
+
+  /**
+   * 5. Sauvegarde l'enregistrement dans la table "certificats" et met à jour "inscriptions"
+   */
+  window.sauvegarderCertificat = async function(inscriptionId, formationId, numeroCertificat, pdfUrl) {
+    console.log("[Certificat Complet] sauvegarderCertificat en BDD...");
+    
+    const client = getSupabase();
+    if (!client) throw new Error("Client Supabase introuvable.");
+
+    const nowStr = new Date().toISOString();
+
+    const { error: dbErr } = await client
+      .from('certificats')
+      .insert([{
+        inscription_id: inscriptionId,
+        formation_id: formationId,
+        numero_certificat: numeroCertificat,
+        pdf_url: pdfUrl,
+        date_emission: nowStr,
+        statut: 'valide'
+      }]);
+
+    if (dbErr) throw new Error("Sauvegarde de la ligne de certificat échouée : " + dbErr.message);
+
+    const { error: insErr } = await client
+      .from('inscriptions')
+      .update({
+        certificat_emission: true,
+        certificat_date: nowStr
+      })
+      .eq('id', inscriptionId);
+
+    if (insErr) throw new Error("Mise à jour du statut d'inscription échouée : " + insErr.message);
+  };
+
+  /**
+   * 6. Fonction maîtresse d'orchestration globale
+   */
+  window.lancerCertificat = async function(inscriptionId) {
+    console.log("[Certificat Complet] Lancement global de la certification...");
+    
+    try {
+      const client = getSupabase();
+      if (!client) throw new Error("Client Supabase introuvable.");
+
+      // Récupérer l'inscription pour vérifier user_id et formation_id
+      const { data: inscription, error: insErr } = await client
+        .from('inscriptions')
+        .select('*')
+        .eq('id', inscriptionId)
+        .single();
+        
+      if (insErr) {
+        throw new Error("Impossible de récupérer l'inscription : " + insErr.message);
+      }
+      if (!inscription) {
+        throw new Error("Inscription introuvable.");
+      }
+
+      const formationId = inscription.formation_id || inscription.course_id;
+      const userId = inscription.user_id;
+
+      if (formationId && userId) {
+        // En récupérer toutes les inscriptions de cet utilisateur pour cette formation
+        const { data: userInscriptions, error: userInsErr } = await client
+          .from('inscriptions')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('formation_id', formationId);
+
+        if (!userInsErr && userInscriptions && userInscriptions.length > 0) {
+          const insIds = userInscriptions.map(ui => ui.id);
+          // Est-ce qu'un certificat existe déjà pour l'une de ces inscriptions?
+          const { data: existingCerts } = await client
+            .from('certificats')
+            .select('*')
+            .in('inscription_id', insIds);
+
+          if (existingCerts && existingCerts.length > 0) {
+            console.log("[Certificat Complet] Un certificat existe déjà pour cette formation et cet utilisateur:", existingCerts[0]);
+            return {
+              pdfUrl: existingCerts[0].pdf_url,
+              certId: existingCerts[0].numero_certificat,
+              isDuplicate: true,
+              data: {
+                nom: `${inscription.prenom || ''} ${inscription.nom || ''}`.trim().toUpperCase(),
+                cours: existingCerts[0].pdf_url,
+                certId: existingCerts[0].numero_certificat
+              }
+            };
+          }
+        }
+      }
+
+      const data = await window.genererCertificat(inscriptionId);
+      window.remplirCertificat(data);
+      const blob = await window.genererPDF(data.certId);
+      const pdfUrl = await window.uploadPDF(blob, data.certId, inscriptionId);
+      await window.sauvegarderCertificat(inscriptionId, data.formationId, data.certId, pdfUrl);
+      
+      console.log("[Certificat Complet] Terminé avec succès. URL générée :", pdfUrl);
+      return { pdfUrl: pdfUrl, certId: data.certId, data: data };
+    } catch (err) {
+      console.error("[Certificat Complet] Erreur lors de l'exécution complète :", err);
+      throw err;
+    }
+  };
+</script>
+
+</body>
+</html>

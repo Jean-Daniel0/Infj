@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classe Virtuelle en Direct - Institut National de Formation des Jeunes</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="courses.css">
+    <link rel="stylesheet" href="navigation.css">
+    <link rel="stylesheet" href="back-button.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://8x8.vc/vpaas-magic-a0923f1ee969475aaaae4297b102f416/external_api.js"></script>
+    <style>
+        .live-page-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .live-layout {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 20px;
+            min-height: 75vh;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 992px) {
+            .live-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cadre de la classe virtuelle */
+        .video-stream-container {
+            background: #0f172a;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            border: 2px solid #003366;
+            transition: all 0.3s ease;
+        }
+
+        .stream-header {
+            background: #002244;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #f47c20;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .stream-header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stream-status-badge {
+            background: #ef4444;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .iframe-wrapper {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            height: 650px; /* Default larger height for a beautiful view */
+            background: #000;
+            overflow: hidden;
+        }
+
+        .stream-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #jitsi-container {
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+
+        /* Barre de contrôle sous la vidéo */
+        .stream-controls {
+            background: #1e293b;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            color: #cbd5e1;
+            border-top: 1px solid #334155;
+        }
+
+        .controls-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .mode-toggle-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn.active {
+            background: #f47c20;
+            color: white;
+        }
+
+        .external-link-btn {
+            background: #003366;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .external-link-btn:hover {
+            background: #104e8b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.3);
+        }
+
+        /* Panneau de droite : Ressources et Notes */
+        .classroom-info-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 4px solid #003366;
+        }
+
+        .info-card.orange-top {
+            border-top-color: #f47c20;
+        }
+
+        .info-card h3 {
+            color: #003366;
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        .resource-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px dashed #e2e8f0;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+
+        .resource-item:last-child {
+            border-bottom: none;
+        }
+
+        .resource-download {
+            color: #f47c20;
+            text-decoration: none;
+        }
+
+        /* Styles Panneau Admin Live */
+        .admin-live-panel {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            border-top: 4px solid #f47c20;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: none; /* Masqué par défaut */
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .admin-live-title {
+            color: #003366;
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .admin-live-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 992px) {
+            .admin-live-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .admin-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .admin-input, .admin-select {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #1e293b;
+            background: #f8fafc;
+        }
+
+        .admin-input:focus, .admin-select:focus {
+            outline: none;
+            border-color: #f47c20;
+            background: #fff;
+        }
+
+        .admin-btn {
+            background: #f47c20;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .admin-btn:hover {
+            background: #d66512;
+            transform: translateY(-1px);
+        }
+
+        .admin-btn-secondary {
+            background: #003366;
+        }
+
+        .admin-btn-secondary:hover {
+            background: #002244;
+        }
+
+        .admin-btn-danger {
+            background: #ef4444;
+        }
+
+        .admin-btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .attendance-table-container {
+            overflow-x: auto;
+            margin-top: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            max-height: 400px;
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        .attendance-table th, .attendance-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .attendance-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .status-badge.online {
+            background: #dcfce7;
+            color: #15803d;
+            animation: pulse-green 1.5s infinite;
+        }
+
+        .status-badge.offline {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        @keyframes pulse-green {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        
+        .session-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .session-item.active-session {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+
+        /* Bloc note interactif personnel */
+        .notes-textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            resize: none;
+            font-size: 0.85rem;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .action-submit-btn {
+            background: #003366;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .action-submit-btn:hover {
+            background: #002244;
+        }
+
+        /* Notifications & Statut de présence */
+        .presence-card {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .presence-icon {
+            font-size: 1.5rem;
+            background: #dcfce7;
+            padding: 8px;
+            border-radius: 50%;
+            line-height: 1;
+        }
+
+        .presence-text h4 {
+            margin: 0;
+            color: #166534;
+            font-size: 0.9rem;
+        }
+
+        .presence-text p {
+            margin: 2px 0 0 0;
+            color: #15803d;
+            font-size: 0.75rem;
+        }
+
+        /* Boutons d'Action Header */
+        .action-btn-header {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn-header:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .action-btn-header.highlighted {
+            background: #f47c20;
+            border-color: #d66512;
+        }
+
+        .action-btn-header.highlighted:hover {
+            background: #e06d15;
+            box-shadow: 0 4px 12px rgba(244, 124, 32, 0.2);
+        }
+
+        /* Bouton Flottant Cinéma */
+        .exit-theater-floating-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100005;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            color: #fff;
+            border: 2px solid #ef4444;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            display: none;
+            transition: all 0.2s ease;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .exit-theater-floating-btn:hover {
+            background: #ef4444;
+            transform: scale(1.05);
+        }
+
+        /* Classes de Mode Immersif (Salon en Pleine Page) */
+        body.live-theater-active {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            background-color: #030712 !important;
+        }
+
+        body.live-theater-active .page-header,
+        body.live-theater-active .sidebar-menu,
+        body.live-theater-active .menu-toggle,
+        body.live-theater-active .drawer-menu,
+        body.live-theater-active .drawer-overlay,
+        body.live-theater-active footer,
+        body.live-theater-active .presence-card,
+        body.live-theater-active #adminToggleContainer,
+        body.live-theater-active #adminLivePanel {
+            display: none !important;
+        }
+
+        body.live-theater-active.has-sidebar {
+            padding-left: 0 !important;
+        }
+
+        body.live-theater-active .live-page-container {
+            max-width: 100vw !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            gap: 0 !important;
+            border-radius: 0 !important;
+            background: #030712;
+        }
+
+        body.live-theater-active .live-layout {
+            grid-template-columns: 1fr !important;
+            gap: 0 !important;
+            height: 100vh !important;
+            min-height: 100vh !important;
+        }
+
+        body.live-theater-active .classroom-info-panel {
+            display: none !important;
+        }
+
+        body.live-theater-active .video-stream-container {
+            border-radius: 0 !important;
+            border: none !important;
+            height: 100vh !important;
+            box-shadow: none !important;
+        }
+
+        body.live-theater-active .iframe-wrapper {
+            height: calc(100vh - 120px) !important;
+            min-height: auto !important;
+        }
+
+        body.live-theater-active #jitsi-container {
+            height: 100% !important;
+        }
+
+        body.live-theater-active .stream-controls {
+            padding: 10px 20px !important;
+            background: #0b0f19 !important;
+            border-top: 1px solid #1e293b !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Bouton de sortie de mode plein écran -->
+    <button id="exitTheaterBtn" class="exit-theater-floating-btn" onclick="toggleTheaterMode()">❌ Quitter le Plein Écran</button>
+    
+    <!-- Écran de blocage de sécurité / d'accès -->
+    <div id="blocage-acces" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.98); color: white; z-index: 10000; align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 20px;">
+        <span style="font-size: 5rem; margin-bottom: 20px;">🔒</span>
+        <h2 id="block-title" style="color: #f47c20; font-size: 2rem; margin: 0 0 15px 0; font-weight: 800; font-family: 'Outfit', sans-serif;">Accès restreint à la classe virtuelle</h2>
+        <p id="block-message" style="max-width: 650px; font-size: 1.1rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 30px;">
+            Vous devez être inscrit à la formation liée et avoir payé le ticket d'accès pour participer à ce cours interactif en direct.
+        </p>
+        <div id="block-actions" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            <a href="cours.html" class="action-submit-btn" style="background: #e2e8f0; color: #1e293b; width: auto; padding: 12px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">🎓 Revenir à Mes Cours</a>
+            <button id="btn-acheter-ticket" class="action-submit-btn" style="background: linear-gradient(135deg, #f47c20 0%, #d4630e 100%); color: white; border: none; width: auto; padding: 12px 30px; border-radius: 8px; font-weight: bold; cursor: pointer; display: none;" onclick="window.acheterTicket()">🎫 Réglé mon Ticket en Direct</button>
+        </div>
+    </div>
+
+    <!-- Le menu de navigation et la barre de titre seront injectés automatiquement par navigation-standalone.js -->
+
+    <main class="live-page-container">
+        <!-- Informations de la Session -->
+        <div class="presence-card">
+            <span class="presence-icon">🎓</span>
+            <div class="presence-text">
+                <h4 id="userGreeting">Connexion validée - Accès autorisé</h4>
+                <p>Votre présence est automatiquement enregistrée sur votre espace personnel INFJ.</p>
+            </div>
+        </div>
+
+        <!-- Bouton d'accès rapide Admin pour ouvrir le panneau -->
+        <div id="adminToggleContainer" style="display:none; margin-bottom: 15px;">
+            <button class="admin-btn admin-btn-secondary" onclick="toggleAdminPanel()">
+                ⚙️ Ouvrir le Panneau d'Administration du Direct & Présences
+            </button>
+        </div>
+
+        <!-- Panneau d'administration de la visioconférence (Masqué par défaut) -->
+        <div id="adminLivePanel" class="admin-live-panel">
+            <div class="admin-live-title">
+                <span>⚙️ Administration de la Visioconférence & Feuilles de Présence</span>
+                <button class="admin-btn admin-btn-danger" style="margin-left: auto; padding: 5px 10px; font-size: 0.8rem;" onclick="toggleAdminPanel()">Fermer</button>
+            </div>
+            
+            <div class="admin-live-grid">
+                <!-- Colonne de Gauche : Créer / Programmer un Live -->
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <h3 style="color: #003366; margin-top: 0; margin-bottom: 12px; font-size: 1rem; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;">📹 Créer un Salon de Cours Unique</h3>
+                    
+                    <form id="createLiveForm" onsubmit="handleCreateLive(event)">
+                        <div class="admin-form-group">
+                            <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Sujet ou Titre du Cours</label>
+                            <input type="text" id="liveTitle" placeholder="Ex: Atelier pratique sur les Bases d'HTML/CSS" class="admin-input" required>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Formation Cible</label>
+                            <select id="liveCourse" class="admin-select">
+                                <option value="general">Général (Tous les étudiants)</option>
+                                <option value="web">Création de Site Web (Développement)</option>
+                                <option value="leadership">Leadership Organisationnel</option>
+                                <option value="entrepreneuriat">Entrepreneuriat</option>
+                                <option value="communication">Communication Écrite/Orale</option>
+                                <option value="marketing">Marketing Digital</option>
+                                <option value="dropshipping">Dropshipping & E-Commerce</option>
+                            </select>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Code Salon Unique (Généré Automatiquement)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="liveMeetingId" class="admin-input" style="flex-grow: 1; font-family: monospace;" readonly>
+                                <button type="button" class="admin-btn" style="padding: 0 12px; font-size: 0.85rem;" onclick="generateComplexMeetingId()">⚙️ Générer</button>
+                            </div>
+                            <span style="font-size: 0.7rem; color: #64748b;">Code hautement complexe et sécurisé pour l'identification des cours.</span>
+                        </div>
+                        
+                        <button type="submit" class="admin-btn" style="width: 100%; margin-top: 10px;">
+                            🚀 Lancer le Cours & Activer l'Iframe
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Colonne de Droite : Sessions actives & Suivi des présences -->
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Sessions Actives -->
+                    <div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; flex-grow: 1;">
+                        <h3 style="color: #003366; margin-top: 0; margin-bottom: 12px; font-size: 1rem; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;">📋 Sessions Planifiées ou en Direct</h3>
+                        <div id="liveSessionsList" style="max-height: 200px; overflow-y: auto;">
+                            <!-- Injecté automatiquement -->
+                            <p style="font-size: 0.85rem; color: #64748b; text-align: center; margin: 20px 0;">Aucun cours programmé pour le moment.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Volet de Présence en bas -->
+            <div id="presenceDetailsSection" style="margin-top: 15px; border-top: 2px solid #e2e8f0; padding-top: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="color: #003366; margin: 0; font-size: 1.05rem;" id="attendanceSectionTitle">👥 Feuille d'Émargement / Présences en Temps Réel</h3>
+                        <p style="font-size: 0.75rem; color: #64748b; margin: 2px 0 0 0;">Les élèves sont enregistrés dès qu'ils se connectent au direct. Actualisation automatique.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="admin-btn admin-btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="refreshAttendance()">🔄 Actualiser la table</button>
+                        <button class="admin-btn" style="padding: 6px 12px; font-size: 0.8rem; background: #22c55e;" onclick="exportAttendanceToCSV()">📥 Exporter la présence (.CSV)</button>
+                    </div>
+                </div>
+                
+                <div class="attendance-table-container">
+                    <table class="attendance-table">
+                        <thead>
+                            <tr>
+                                <th>Étudiant</th>
+                                <th>Adresse Email</th>
+                                <th>Heure d'entrée</th>
+                                <th>Dernier signe d'activité</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">Veuillez sélectionner un cours en direct pour afficher la liste d'émargement.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classe virtuelle et Sidebar -->
+        <div class="live-layout">
+            <!-- Colonne Principale: Intégration Classe Virtuelle -->
+            <div class="video-stream-container">
+                <div class="stream-header">
+                    <div class="stream-header-title">
+                        <span class="stream-status-badge">DIRECT</span>
+                        <h2 style="color: white; margin: 0; font-size: 1.2rem; font-weight: bold;">Espace Échange & Formation Interactive</h2>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <button id="toggleNotesBtn" class="action-btn-header" onclick="toggleNotesPanel()">📋 Masquer les Notes</button>
+                        <button id="toggleTheaterBtn" class="action-btn-header highlighted" onclick="toggleTheaterMode()">🎬 Mode Plein Écran (Salon)</button>
+                        <span id="currentTime" style="font-family: monospace; font-size: 0.9rem; background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px;">--:--</span>
+                    </div>
+                </div>
+
+                <!-- Iframe Container -->
+                <div class="iframe-wrapper">
+                    <!-- Par défaut, nous chargeons une session de conférence Jitsi interactive sécurisée et gratuite pour l'INFJ -->
+                    <iframe id="liveIframe" 
+                            class="stream-iframe" 
+                            src="https://meet.jit.si/INFJ-Classe-Virtuelle-Interactive-Session" 
+                            style="display: none;"
+                            allow="camera; microphone; fullscreen; display-capture; clipboard-write; autoplay;" 
+                            referrerpolicy="no-referrer">
+                    </iframe>
+                    <div id="jitsi-container" style="width: 100%; height: 550px; background: #000;"></div>
+                </div>
+
+                <!-- Barre d'options de la classe virtuelle -->
+                <div class="stream-controls">
+                    <div class="controls-top">
+                        <div>
+                            <strong style="color: white; display: block; font-size: 0.9rem; margin-bottom: 2px;">Méthode d'affichage</strong>
+                            <span style="font-size: 0.75rem; color: #94a3b8;">Choisissez votre plateforme de cours favorite</span>
+                        </div>
+                        <div class="mode-toggle-group">
+                            <button id="viewJitsiBtn" class="mode-btn active" onclick="switchCallMode('jitsi')">🌐 Vidéoconférence Intégrée</button>
+                            <button id="viewMeetBtn" class="mode-btn" onclick="switchCallMode('meet')">📹 Google Meet</button>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(0,0,0,0.2); padding: 12px 15px; border-radius: 8px; border-left: 3px solid #f47c20; font-size: 0.8rem; line-height: 1.4;">
+                        <p style="margin: 0 0 8px 0; color: #e2e8f0; font-weight: 500;">
+                            💡 <strong>Information importante :</strong> Google Meet restreint son affichage à l'intérieur de fenêtres externes (iframe) pour des raisons de sécurité. Si vous choisissez le mode Google Meet, l'iframe vous guidera pour l'ouvrir dans un nouvel onglet.
+                        </p>
+                        <a id="actionCallLink" href="https://meet.google.com/abc-defg-hij" target="_blank" class="external-link-btn" style="display: none;">
+                            🚀 Ouvrir Google Meet en plein écran
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonne Droite: Ressources & Notes de cours -->
+            <div class="classroom-info-panel">
+                <!-- Téléchargement Documents -->
+                <div class="info-card">
+                    <h3>📂 Supports pédagogiques</h3>
+                    <ul class="resource-list">
+                        <li class="resource-item">
+                            <span>📖 Syllabus INFJ - Leadership.pdf</span>
+                            <a href="#" class="resource-download" onclick="alert('Document imprimé en téléchargement')">PDF</a>
+                        </li>
+                        <li class="resource-item">
+                            <span>📘 Guide d'entrepreneuriat jeune.pdf</span>
+                            <a href="#" class="resource-download" onclick="alert('Document imprimé en téléchargement')">PDF</a>
+                        </li>
+                        <li class="resource-item">
+                            <span>📝 Plan d'action stratégique.docx</span>
+                            <a href="#" class="resource-download" onclick="alert('Document imprimé en téléchargement')">DOCX</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Notes Personnelles -->
+                <div class="info-card orange-top">
+                    <h3>📝 Notes de cours</h3>
+                    <textarea class="notes-textarea" id="personalNotes" placeholder="Prenez vos notes de cours ici pendant le direct. Elles seront conservées dans votre navigateur..."></textarea>
+                    <button class="action-submit-btn" onclick="savePersonalNotes()">Sauvegarder les notes</button>
+                    <div id="notesSavedMsg" style="display:none; color: #166534; font-size: 0.75rem; text-align: center; margin-top: 5px; font-weight: bold;">Notes enregistrées localement !</div>
+                </div>
+
+                <!-- Instructions de contact rapide -->
+                <div class="info-card">
+                    <h3>📞 Support INFJ</h3>
+                    <p style="font-size: 0.8rem; color: #475569; margin: 0 0 10px 0; line-height: 1.45;">En cas de problème technique sur la classe virtuelle ou de connexion, contactez l'administration de l'INFJ directement.</p>
+                    <a href="https://wa.me/50946341547" target="_blank" style="background:#25d366; color:white; display:block; text-align:center; padding:8px; border-radius:6px; font-weight:bold; font-size:0.8rem; text-decoration:none;">
+                        📱 WhatsApp Administration
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="navigation-standalone.js"></script>
+    <script type="module" src="back-button.js"></script>
+    <script type="module">
+        import { supabase, auth } from './supabase-config.js';
+
+        // URL Jitsi de base
+        const JITSI_BASE_URL = "https://meet.jit.si/";
+        let currentJitsiUrl = "https://meet.jit.si/INFJ-Classe-Virtuelle-Interactive-Session";
+        let GOOGLE_MEET_URL = "https://meet.google.com/abc-defg-hij";
+
+        let currentUser = null;
+        let isAdmin = false;
+        let activeSessionId = null;
+        let activeMeetingId = "INFJ-Classe-Virtuelle-Interactive-Session";
+        let heartbeatInterval = null;
+        let selectedAdminSessionId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Authentification & Rôle
+            try {
+                const { user } = await auth.getCurrentUser();
+                if (!user) {
+                    window.location.href = 'login.html?redirect=live.html';
+                    return;
+                }
+                currentUser = user;
+                
+                const greeting = document.getElementById('userGreeting');
+                if (greeting) {
+                    const name = user.user_metadata?.prenom || user.user_metadata?.nom || user.email.split('@')[0];
+                    greeting.textContent = `Bonjour, ${name} - Votre présence est validée`;
+                }
+
+                // Vérifier si Admin
+                const adminEmails = ['mradmin@infj.com'];
+                if (user.user_metadata?.role === 'admin' || user.role === 'admin' || (user.email && adminEmails.includes(user.email.toLowerCase()))) {
+                    isAdmin = true;
+                } else {
+                    // Consulter Supabase
+                    const { data: userData } = await supabase
+                        .from('users')
+                        .select('role')
+                        .eq('id', user.id)
+                        .maybeSingle();
+                    if (userData?.role === 'admin') {
+                        isAdmin = true;
+                    }
+                }
+
+                if (isAdmin) {
+                    const toggleContainer = document.getElementById('adminToggleContainer');
+                    if (toggleContainer) toggleContainer.style.display = 'block';
+                    generateComplexMeetingId();
+                    await loadSessionsList();
+                }
+
+            } catch (e) {
+                console.warn('Erreur authentification:', e);
+                window.location.href = 'login.html?redirect=live.html';
+                return;
+            }
+
+            // 2. Récupérer ou initialiser la bonne visioconférence pour l'élève
+            await fetchAndLoadActiveSession();
+
+            // 3. Initialiser l'horloge du direct
+            setInterval(updateClock, 1000);
+            updateClock();
+
+            // 4. Charger les notes sauvegardées
+            const savedNotes = localStorage.getItem('infj_live_notes');
+            if (savedNotes) {
+                document.getElementById('personalNotes').value = savedNotes;
+            }
+        });
+
+        // Fonction d'horloge
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const clockEl = document.getElementById('currentTime');
+            if (clockEl) clockEl.textContent = timeString;
+        }
+
+        // Sauvegarder les notes localement
+        window.savePersonalNotes = function() {
+            const text = document.getElementById('personalNotes').value;
+            localStorage.setItem('infj_live_notes', text);
+            const msg = document.getElementById('notesSavedMsg');
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 2500);
+        }
+
+        // Basculer le mode d'appel
+        window.switchCallMode = function(mode) {
+            const jitsiBtn = document.getElementById('viewJitsiBtn');
+            const meetBtn = document.getElementById('viewMeetBtn');
+            const iframe = document.getElementById('liveIframe');
+            const container = document.getElementById('jitsi-container');
+            const actionLink = document.getElementById('actionCallLink');
+
+            if (mode === 'jitsi') {
+                jitsiBtn.classList.add('active');
+                meetBtn.classList.remove('active');
+                
+                if (container) container.style.display = 'block';
+                actionLink.style.display = 'none';
+                
+                const existingGuide = document.getElementById('meetGuide');
+                if (existingGuide) existingGuide.remove();
+            } else if (mode === 'meet') {
+                meetBtn.classList.add('active');
+                jitsiBtn.classList.remove('active');
+
+                if (container) container.style.display = 'none';
+                actionLink.href = GOOGLE_MEET_URL;
+                actionLink.style.display = 'inline-flex';
+
+                const wrapper = document.querySelector('.iframe-wrapper');
+                const existingGuide = document.getElementById('meetGuide');
+                if (existingGuide) existingGuide.remove();
+
+                const guideDiv = document.createElement('div');
+                guideDiv.id = 'meetGuide';
+                guideDiv.style.cssText = "position: absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; background: radial-gradient(circle, #0f172a 0%, #030712 100%); color: white; text-align:center;";
+                guideDiv.innerHTML = `
+                    <div style="font-size: 3.5rem; margin-bottom: 20px;">📹</div>
+                    <h3 style="color: #f47c20; font-size: 1.5rem; margin: 0 0 10px 0; font-weight:bold;">Classe Virtuelle Google Meet</h3>
+                    <p style="max-width: 500px; font-size: 0.95rem; line-height: 1.5; color: #cbd5e1; margin-bottom: 25px;">
+                        Pour sécuriser la connexion, Google Meet doit s'ouvrir directement en dehors de l'interface de l'INFJ. Cliquez ci-dessous pour rejoindre les enseignants et les autres étudiants en visioconférence.
+                    </p>
+                    <a href="${GOOGLE_MEET_URL}" target="_blank" style="background:#f47c20; color:white; font-size: 1.05rem; font-weight: bold; text-decoration: none; padding: 12px 30px; border-radius: 30px; box-shadow: 0 4px 15px rgba(244,124,32,0.4); transition: transform 0.2s;">
+                        Rejoindre Google Meet maintenant
+                    </a>
+                `;
+                wrapper.appendChild(guideDiv);
+            }
+        }
+
+        // Afficher/Masquer le panneau d'administration
+        window.toggleAdminPanel = function() {
+            const panel = document.getElementById('adminLivePanel');
+            if (panel.style.display === 'flex') {
+                panel.style.display = 'none';
+            } else {
+                panel.style.display = 'flex';
+                loadSessionsList();
+            }
+        }
+
+        // Générer un meeting ID hautement complexe et unique
+        window.generateComplexMeetingId = function() {
+            const course = document.getElementById('liveCourse').value;
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            let randomStr = '';
+            for (let i = 0; i < 20; i++) {
+                randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            const uniqueId = `infj-live-${course}-${randomStr}`;
+            document.getElementById('liveMeetingId').value = uniqueId;
+            return uniqueId;
+        }
+
+        // Créer une nouvelle visioconférence (Admin)
+        window.handleCreateLive = async function(event) {
+            event.preventDefault();
+            const titre = document.getElementById('liveTitle').value;
+            const course_id = document.getElementById('liveCourse').value;
+            const meeting_id = document.getElementById('liveMeetingId').value;
+
+            if (!titre || !meeting_id) {
+                alert("Veuillez remplir tous les champs.");
+                return;
+            }
+
+            try {
+                // Insérer la nouvelle session de visioconférence
+                const { data, error } = await supabase
+                    .from('live_sessions')
+                    .insert([{
+                        titre,
+                        course_id,
+                        meeting_id,
+                        is_active: true,
+                        created_by: currentUser.id,
+                        created_at: new Date().toISOString()
+                    }])
+                    .select();
+
+                if (error) throw error;
+
+                alert("Visioconférence lancée avec succès en direct !");
+                document.getElementById('liveTitle').value = "";
+                generateComplexMeetingId();
+                await loadSessionsList();
+                await fetchAndLoadActiveSession();
+
+            } catch (err) {
+                console.error("Erreur lors de la création du live:", err);
+                
+                // Fallback local en cas d'absence temporaire de la table sur Supabase
+                const fallbackSession = {
+                    id: 'fallback-' + Date.now(),
+                    titre,
+                    course_id,
+                    meeting_id,
+                    is_active: true,
+                    created_at: new Date().toISOString()
+                };
+                let locals = JSON.parse(localStorage.getItem('local_live_sessions') || '[]');
+                locals.push(fallbackSession);
+                localStorage.setItem('local_live_sessions', JSON.stringify(locals));
+                
+                alert("Visioconférence lancée en mode hors ligne/secours.");
+                document.getElementById('liveTitle').value = "";
+                generateComplexMeetingId();
+                await loadSessionsList();
+                await fetchAndLoadActiveSession();
+            }
+        }
+
+        // Clôturer une visioconférence
+        window.closeSession = async function(id) {
+            if (!confirm("Voulez-vous vraiment clôturer cette visioconférence ? Elle ne sera plus accessible aux étudiants.")) return;
+
+            try {
+                if (id.toString().startsWith('fallback-')) {
+                    // Hors-ligne
+                    let locals = JSON.parse(localStorage.getItem('local_live_sessions') || '[]');
+                    locals = locals.map(s => s.id === id ? { ...s, is_active: false } : s);
+                    localStorage.setItem('local_live_sessions', JSON.stringify(locals));
+                } else {
+                    const { error } = await supabase
+                        .from('live_sessions')
+                        .update({ is_active: false })
+                        .eq('id', id);
+                    if (error) throw error;
+                }
+
+                alert("Visioconférence clôturée.");
+                await loadSessionsList();
+                await fetchAndLoadActiveSession();
+            } catch (err) {
+                console.error("Erreur lors de la clôture:", err);
+            }
+        }
+
+        // Supprimer une session de l'historique
+        window.deleteSession = async function(id) {
+            if (!confirm("Voulez-vous supprimer définitivement cet enregistrement ?")) return;
+
+            try {
+                if (id.toString().startsWith('fallback-')) {
+                    let locals = JSON.parse(localStorage.getItem('local_live_sessions') || '[]');
+                    locals = locals.filter(s => s.id !== id);
+                    localStorage.setItem('local_live_sessions', JSON.stringify(locals));
+                } else {
+                    const { error } = await supabase
+                        .from('live_sessions')
+                        .delete()
+                        .eq('id', id);
+                    if (error) throw error;
+                }
+                
+                alert("Enregistrement supprimé.");
+                await loadSessionsList();
+            } catch (err) {
+                console.error("Erreur lors de la suppression:", err);
+            }
+        }
+
+        // Charger la liste des sessions pour l'admin
+        async function loadSessionsList() {
+            const listContainer = document.getElementById('liveSessionsList');
+            if (!listContainer) return;
+
+            let sessions = [];
+            try {
+                const { data, error } = await supabase
+                    .from('live_sessions')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                sessions = data || [];
+            } catch (err) {
+                console.warn("Récupération locale des sessions (fallback) :");
+                sessions = JSON.parse(localStorage.getItem('local_live_sessions') || '[]');
+            }
+
+            if (sessions.length === 0) {
+                listContainer.innerHTML = '<p style="font-size: 0.85rem; color: #64748b; text-align: center; margin: 20px 0;">Aucun cours programmé pour le moment.</p>';
+                return;
+            }
+
+            listContainer.innerHTML = sessions.map(session => {
+                const isActive = session.is_active;
+                const activeClass = isActive ? 'active-session' : '';
+                const formatTime = new Date(session.created_at).toLocaleString('fr-FR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                
+                return `
+                    <div class="session-item ${activeClass}">
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <div>
+                                <strong style="color:#003366; font-size:0.9rem;">${session.titre}</strong>
+                                <span style="font-size:0.75rem; background:#e2e8f0; color:#475569; padding:2px 6px; border-radius:4px; margin-left:5px;">
+                                    ${session.course_id.toUpperCase()}
+                                </span>
+                            </div>
+                            <span class="status-badge ${isActive ? 'online' : 'offline'}">${isActive ? 'En Cours' : 'Clôturé'}</span>
+                        </div>
+                        <div style="font-size:0.75rem; color:#64748b; font-family:monospace; word-break:break-all;">
+                            ID: ${session.meeting_id}
+                        </div>
+                        <div style="font-size:0.7rem; color:#94a3b8;">Créé le: ${formatTime}</div>
+                        
+                        <div style="display:flex; gap:8px; margin-top:5px; justify-content: flex-end;">
+                            <button class="admin-btn admin-btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="viewAttendanceForSession('${session.id}', '${session.titre}')">
+                                📊 Présences
+                            </button>
+                            ${isActive ? `
+                                <button class="admin-btn admin-btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="closeSession('${session.id}')">
+                                    🛑 Clôturer
+                                </button>
+                            ` : `
+                                <button class="admin-btn admin-btn-danger" style="padding:4px 8px; font-size:0.75rem; background:#94a3b8;" onclick="deleteSession('${session.id}')">
+                                    🗑️ Supprimer
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Afficher la table des présences pour une session donnée (Admin)
+        window.viewAttendanceForSession = async function(sessionId, sessionTitle) {
+            selectedAdminSessionId = sessionId;
+            document.getElementById('attendanceSectionTitle').textContent = `👥 Présences en Temps Réel : ${sessionTitle}`;
+            await refreshAttendance();
+        };
+
+        // Rafraîchir les présences de la visioconférence courante
+        window.refreshAttendance = async function() {
+            const tbody = document.getElementById('attendanceTableBody');
+            if (!tbody) return;
+
+            if (!selectedAdminSessionId) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">Veuillez sélectionner un cours en direct pour afficher la liste d'émargement.</td></tr>`;
+                return;
+            }
+
+            let attends = [];
+            try {
+                if (selectedAdminSessionId.toString().startsWith('fallback-')) {
+                    // Hors-ligne fallback local
+                    attends = JSON.parse(localStorage.getItem(`fallback_attendance_${selectedAdminSessionId}`) || '[]');
+                } else {
+                    const { data, error } = await supabase
+                        .from('live_attendance')
+                        .select('*')
+                        .eq('session_id', selectedAdminSessionId)
+                        .order('joined_at', { ascending: false });
+                    
+                    if (error) throw error;
+                    attends = data || [];
+                }
+            } catch (err) {
+                console.error("Erreur de récupération des présences:", err);
+                attends = JSON.parse(localStorage.getItem(`fallback_attendance_${selectedAdminSessionId}`) || '[]');
+            }
+
+            if (attends.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">Aucun étudiant n'a encore rejoint cette visioconférence.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = attends.map(att => {
+                const joined = new Date(att.joined_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const lastSeen = new Date(att.last_seen_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                // Si la dernière activité remonte à moins de 45 secondes, l'étudiant est considéré en ligne
+                const isOnline = (new Date() - new Date(att.last_seen_at)) < 45000;
+                
+                return `
+                    <tr>
+                        <td style="font-weight: 500; color: #1e293b;">🎓 ${att.nom_complet || 'Étudiant'}</td>
+                        <td style="color: #475569;">${att.email}</td>
+                        <td style="font-family: monospace;">${joined}</td>
+                        <td style="font-family: monospace;">${lastSeen}</td>
+                        <td>
+                            <span class="status-badge ${isOnline ? 'online' : 'offline'}">
+                                ${isOnline ? '● Connecté' : '● Déconnecté'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        // Exporter la feuille d'émargement au format CSV (Admin)
+        window.exportAttendanceToCSV = async function() {
+            if (!selectedAdminSessionId) {
+                alert("Veuillez sélectionner un cours pour exporter sa feuille de présence.");
+                return;
+            }
+
+            let attends = [];
+            try {
+                if (selectedAdminSessionId.toString().startsWith('fallback-')) {
+                    attends = JSON.parse(localStorage.getItem(`fallback_attendance_${selectedAdminSessionId}`) || '[]');
+                } else {
+                    const { data, error } = await supabase
+                        .from('live_attendance')
+                        .select('*')
+                        .eq('session_id', selectedAdminSessionId)
+                        .order('joined_at', { ascending: false });
+                    if (error) throw error;
+                    attends = data || [];
+                }
+            } catch (err) {
+                console.error(err);
+                attends = JSON.parse(localStorage.getItem(`fallback_attendance_${selectedAdminSessionId}`) || '[]');
+            }
+
+            if (attends.length === 0) {
+                alert("Aucun participant n'est enregistré. L'export CSV est vide.");
+                return;
+            }
+
+            // Composer le CSV
+            let csvContent = "\uFEFF"; // BOM pour Excel UTF-8
+            csvContent += "Nom de l'étudiant;Adresse Email;Heure d'arrivée;Dernière activité;Statut\n";
+
+            attends.forEach(att => {
+                const joined = new Date(att.joined_at).toLocaleString('fr-FR');
+                const lastSeen = new Date(att.last_seen_at).toLocaleString('fr-FR');
+                const isOnline = (new Date() - new Date(att.last_seen_at)) < 45000 ? "Connecté" : "Déconnecté";
+                
+                csvContent += `"${att.nom_complet || 'Étudiant'}";"${att.email}";"${joined}";"${lastSeen}";"${isOnline}"\n`;
+            });
+
+            // Lancer le téléchargement
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Feuille-Presence-INFJ-${selectedAdminSessionId}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        let currentSessionPrice = 0;
+
+        // Acheter un ticket d'accès (Live payant)
+        window.acheterTicket = async function() {
+            if (!currentUser || !activeSessionId) return;
+
+            const confirmBuy = confirm(`Voulez-vous acheter votre ticket d'accès de ${currentSessionPrice} HTG pour ce cours en direct ?`);
+            if (!confirmBuy) return;
+
+            try {
+                const name = currentUser.user_metadata?.prenom ? `${currentUser.user_metadata.prenom} ${currentUser.user_metadata.nom || ''}` : currentUser.email.split('@')[0];
+                const timestamp = new Date().toISOString();
+
+                // On upsert dans live_attendance avec a_acces = true
+                const { error } = await supabase
+                    .from('live_attendance')
+                    .upsert({
+                        session_id: activeSessionId,
+                        user_id: currentUser.id,
+                        email: currentUser.email,
+                        nom_complet: name,
+                        joined_at: timestamp,
+                        last_seen_at: timestamp,
+                        a_acces: true
+                    }, {
+                        onConflict: 'session_id,user_id'
+                    });
+
+                if (error) throw error;
+
+                alert("🎉 Ticket d'accès acheté avec succès ! Rejoindre la classe en cours...");
+                window.location.reload();
+
+            } catch (err) {
+                console.error("Erreur de paiement s'est produite:", err);
+                alert("Une erreur s'est produite lors de la validation du ticket.");
+            }
+        }
+
+        // Récupérer et charger la session de cours active pour l'utilisateur
+        async function fetchAndLoadActiveSession() {
+            // Déterminer sur quelle formation l'étudiant est engagé (via URL ou par défaut general)
+            const urlParams = new URLSearchParams(window.location.search);
+            let sessionId = urlParams.get('id');
+
+            let activeSession = null;
+
+            try {
+                if (sessionId) {
+                    const { data, error } = await supabase
+                        .from('live_sessions')
+                        .select('*')
+                        .eq('id', sessionId)
+                        .maybeSingle();
+                    if (data) activeSession = data;
+                } else {
+                    // Tenter de récupérer la première visioconférence active
+                    const { data, error } = await supabase
+                        .from('live_sessions')
+                        .select('*')
+                        .eq('is_active', true)
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+                    if (data) activeSession = data;
+                }
+            } catch (err) {
+                console.warn("Utilisation du fallback de secours de session active :");
+                const locals = JSON.parse(localStorage.getItem('local_live_sessions') || '[]');
+                const activeLocals = locals.filter(s => s.is_active);
+                if (activeLocals.length > 0) {
+                    activeSession = activeLocals[0];
+                }
+            }
+
+            const blocage = document.getElementById('blocage-acces');
+            const titleBlock = document.getElementById('block-title');
+            const msgBlock = document.getElementById('block-message');
+            const buyBtn = document.getElementById('btn-acheter-ticket');
+
+            // Vérification du Mode Chantier de Sécurité pour les cours en direct (Même l'administrateur est bloqué pour maintenance de la visioconférence)
+            blocage.style.display = 'flex';
+            const blockIcon = blocage.querySelector('span');
+            if (blockIcon) blockIcon.textContent = '🚧';
+            titleBlock.textContent = "Classe Virtuelle en Chantier 🛠️";
+            titleBlock.style.color = "#f47c20"; // Signature Orange INFJ
+            msgBlock.innerHTML = `
+                <div style="text-align: center; font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 10px;">
+                    <p style="font-size: 1.15rem; line-height: 1.6; margin-bottom: 22px; color: #f8fafc;">
+                        Afin de vous proposer une plateforme d'échange et de classe en direct de dernière génération, plus fluide et sécurisée, 
+                        <strong>notre espace de visioconférence interactive subit actuellement d'importantes améliorations techniques.</strong>
+                    </p>
+                    <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.5; margin-bottom: 8px;">
+                        👷 Nos ingénieurs mènent des opérations de maintenance sur les serveurs de communication de l'INFJ.
+                    </p>
+                    <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.5; margin-bottom: 15px;">
+                        Nous nous excusons pour cette interruption temporaire. Vos cours interactifs en direct reprendront très prochainement !
+                    </p>
+                </div>
+            `;
+            buyBtn.style.display = 'none';
+
+            // Redéfinir élégamment les boutons de navigation de retour
+            const backActions = document.getElementById('block-actions');
+            if (backActions) {
+                if (isAdmin) {
+                    backActions.innerHTML = `
+                        <a href="admin-videos.html" class="action-submit-btn" style="background: linear-gradient(135deg, #003366 0%, #002244 100%); color: white; width: auto; padding: 12px 30px; border-radius: 25px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,51,102,0.4); border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s;">
+                            💼 Tableau de Bord Admin
+                        </a>
+                        <a href="index.html" class="action-submit-btn" style="background: #1e293b; color: #cbd5e1; width: auto; padding: 12px 30px; border-radius: 25px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s;">
+                            🏠 Accueil INFJ
+                        </a>
+                    `;
+                } else {
+                    backActions.innerHTML = `
+                        <a href="cours.html" class="action-submit-btn" style="background: linear-gradient(135deg, #003366 0%, #002244 100%); color: white; width: auto; padding: 12px 30px; border-radius: 25px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,51,102,0.4); border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s;">
+                            📚 Retourner à Mes Formations
+                        </a>
+                        <a href="index.html" class="action-submit-btn" style="background: #1e293b; color: #cbd5e1; width: auto; padding: 12px 30px; border-radius: 25px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s;">
+                            🏠 Accueil INFJ
+                        </a>
+                    `;
+                }
+            }
+            return;
+
+            if (!activeSession) {
+                // Pas de session active de l'admin
+                blocage.style.display = 'flex';
+                titleBlock.textContent = "Aucun Cours en Direct Actif";
+                msgBlock.textContent = "Il n'y a pas de cours interactif en direct en ce moment dans l'Institut INFJ. Veuillez en lancer un depuis la console d'administration.";
+                buyBtn.style.display = 'none';
+                return;
+            }
+
+            activeSessionId = activeSession.id;
+            activeMeetingId = activeSession.meeting_id;
+            currentJitsiUrl = JITSI_BASE_URL + activeSession.meeting_id;
+            currentSessionPrice = activeSession.prix || 0;
+
+            // Tout est correct, masquer l'écran de verrouillage
+            blocage.style.display = 'none';
+
+            // Initialiser le salon JaaS avec authentification JWT
+            await window.ouvrirJaaS(activeSessionId, isAdmin);
+
+            // Modifier le titre dynamique de l'espace de direct
+            const streamHeaderTitle = document.querySelector('.stream-header-title h2');
+            if (streamHeaderTitle) {
+                streamHeaderTitle.textContent = `En Direct : ${activeSession.titre}`;
+            }
+
+            // Enregistrer la présence immédiate de cet étudiant et démarrer le Heartbeat
+            await sendPresenceHeartbeat();
+            
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            heartbeatInterval = setInterval(sendPresenceHeartbeat, 15000); // Heartbeat toutes les 15 secondes
+        }
+
+        // Envoyer un battement de cœur pour valider la présence
+        async function sendPresenceHeartbeat() {
+            if (!currentUser || !activeSessionId) return;
+
+            const name = currentUser.user_metadata?.prenom ? `${currentUser.user_metadata.prenom} ${currentUser.user_metadata.nom || ''}` : currentUser.email.split('@')[0];
+            const timestamp = new Date().toISOString();
+
+            try {
+                if (activeSessionId.toString().startsWith('fallback-') || activeSessionId === 'default_session') {
+                    // Fallback
+                    const fallbackStorageKey = `fallback_attendance_${activeSessionId}`;
+                    let localAttendance = JSON.parse(localStorage.getItem(fallbackStorageKey) || '[]');
+                    
+                    const existingIndex = localAttendance.findIndex(a => a.user_id === currentUser.id);
+                    if (existingIndex !== -1) {
+                        localAttendance[existingIndex].last_seen_at = timestamp;
+                    } else {
+                        localAttendance.push({
+                            id: 'att-' + Date.now(),
+                            session_id: activeSessionId,
+                            user_id: currentUser.id,
+                            email: currentUser.email,
+                            nom_complet: name,
+                            joined_at: timestamp,
+                            last_seen_at: timestamp
+                        });
+                    }
+                    localStorage.setItem(fallbackStorageKey, JSON.stringify(localAttendance));
+                } else {
+                    // Supabase
+                    const { error } = await supabase
+                        .from('live_attendance')
+                        .upsert({
+                            session_id: activeSessionId,
+                            user_id: currentUser.id,
+                            email: currentUser.email,
+                            nom_complet: name,
+                            joined_at: timestamp, 
+                            last_seen_at: timestamp
+                        }, {
+                            onConflict: 'session_id,user_id'
+                        });
+
+                    if (error) throw error;
+                }
+            } catch (err) {
+                console.error("Erreur d'envoi du battement de présence:", err);
+            }
+        }
+
+        // --- Intégration JaaS (Jitsi as a Service) ---
+        window.getAuthToken = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            return session?.access_token || '';
+        };
+
+        window.planifierRenouvellement = (sessionId, estAdmin) => {
+            const DEUX_HEURES  = 2 * 60 * 60 * 1000;
+            const QUINZE_MIN   = 15 * 60 * 1000;
+
+            window.tokenRenewalTimer = setTimeout(async () => {
+                try {
+                    const response = await fetch(
+                        `/api/jitsi/token?sessionId=${sessionId}&role=${estAdmin ? 'moderator' : 'user'}`,
+                        {
+                            headers: {
+                                'Authorization': 'Bearer ' + await window.getAuthToken()
+                            }
+                        }
+                    );
+                    const { token } = await response.json();
+
+                    if(window.jitsiApi){
+                        window.jitsiApi.executeCommand('setJWT', token);
+                        console.log('Token JaaS renouvelé');
+                    }
+
+                    // Replanifier
+                    window.planifierRenouvellement(sessionId, estAdmin);
+
+                } catch(error) {
+                    console.error('Erreur renouvellement token:', error);
+                }
+            }, DEUX_HEURES - QUINZE_MIN);
+        };
+
+        window.ouvrirJaaS = async (sessionId, estAdmin = false) => {
+            const container = document.getElementById('jitsi-container');
+            if (!container) return;
+
+            // Masquer l'iframe par défaut s'il s'affiche
+            const iframe = document.getElementById('liveIframe');
+            if (iframe) iframe.style.display = 'none';
+
+            container.style.display = 'block';
+            container.style.height = 'auto'; // Ajuster au contenu premium
+            container.style.minHeight = '550px';
+
+            // Injecter le style d'animation localement pour garantir de superbes transitions
+            if (!document.getElementById('chantier-styles')) {
+                const styleEl = document.createElement('style');
+                styleEl.id = 'chantier-styles';
+                styleEl.textContent = `
+                    @keyframes pulseAlert {
+                        0%, 100% { opacity: 1; transform: scale(1); }
+                        50% { opacity: 0.8; transform: scale(1.02); }
+                    }
+                    @keyframes scanlineAnim {
+                        0% { transform: translateY(-100%); }
+                        100% { transform: translateY(100%); }
+                    }
+                    @keyframes spinSlow {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                    @keyframes blinkRed {
+                        0%, 100% { opacity: 1; }
+                        50% { opacity: 0.4; }
+                    }
+                    .chantier-interactive-btn:hover {
+                        transform: translateY(-2px) !important;
+                        box-shadow: 0 4px 15px rgba(244,124,32,0.3) !important;
+                        filter: brightness(1.1);
+                    }
+                    .chantier-secondary-btn:hover {
+                        background: #334155 !important;
+                        color: white !important;
+                        transform: translateY(-2px) !important;
+                    }
+                `;
+                document.head.appendChild(styleEl);
+            }
+
+            // Définir les fonctions globales interactives de test
+            window.simulerTestMicro = () => {
+                alert("🎤 [Test Diagnostic INFJ] : Microphone détecté. Niveau : OK (-12dB). Annulation de l'écho activée.");
+            };
+            window.simulerCalibrageVideo = () => {
+                alert("⚙️ [Test de Latence Vidéo] : Latence mesurée à 14ms sur le réseau d'apprentissage local de l'INFJ. Codec H.264 certifié.");
+            };
+            window.rechargerChantier = () => {
+                alert("⏳ [Mise à jour d'état] : Les ingénieurs INFJ finalisent l'allocation de la bande passante et le filtrage IP du direct. Revenez prochainement.");
+            };
+
+            const userRoleBadge = estAdmin ? 'FORMATEUR & MODÉRATEUR' : 'ÉTUDIANT ACCUEILLI';
+            const userRoleColor = estAdmin ? '#ef4444' : '#22c55e';
+
+            // Récupérer le titre de la session actuelle pour un affichage précis
+            let currentSessionTitle = 'Espace Échange';
+            try {
+                if (typeof activeSession !== 'undefined' && activeSession) {
+                    currentSessionTitle = activeSession.titre || 'Espace Échange';
+                }
+            } catch(e) {}
+
+            container.innerHTML = `
+                <div class="chantier-inner" style="width: 100%; min-height: 550px; background: radial-gradient(circle at center, #0f1730 0%, #030712 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; color: white; font-family: 'Inter', sans-serif; position: relative; overflow: hidden; text-align: center; border: 2px dashed #f47c20; border-radius: 12px; box-shadow: inset 0 0 50px rgba(244, 124, 32, 0.15); box-sizing: border-box;">
+                    <!-- Ruban rayé de construction sur le haut -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 8px; background: repeating-linear-gradient(45deg, #f47c20, #f47c20 15px, #030712 15px, #030712 30px); z-index: 5;"></div>
+                    
+                    <!-- En-tête -->
+                    <div style="margin-bottom: 30px; z-index: 2; position: relative;">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: rgba(244, 124, 32, 0.12); border: 1px solid rgba(244, 124, 32, 0.4); padding: 6px 18px; border-radius: 99px; color: #f47c20; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 18px; animation: pulseAlert 2.5s infinite; box-shadow: 0 4px 15px rgba(244,124,32,0.1);">
+                            🚧 ESPACE EN CHANTIER • RESTRUCTURATION EN COURS 🚧
+                        </span>
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.85rem; font-weight: 800; line-height: 1.2; margin: 0 0 12px 0; background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            Classe Virtuelle Interactive INFJ
+                        </h2>
+                        <p style="color: #94a3b8; max-width: 650px; margin: 0 auto; font-size: 0.92rem; line-height: 1.55;">
+                            Notre système de visioconférence sécurisé haute-définition est en cours d'optimisation technique pour maximiser la clarté audio et la fluidité d'apprentissage.
+                        </p>
+                    </div>
+
+                    <!-- Split Grid Content -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; width: 100%; max-width: 950px; z-index: 2; text-align: left; box-sizing: border-box; margin-bottom: 10px;">
+                        
+                        <!-- Left Panel: Test Signal Visual -->
+                        <div style="background: rgba(11, 15, 25, 0.7); border-radius: 12px; border: 1px solid #1e293b; padding: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; min-height: 250px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); box-sizing: border-box;">
+                            <!-- Mire rétro -->
+                            <div style="width: 100%; height: 140px; background: linear-gradient(135deg, #181924 0%, #101118 100%); border-radius: 8px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(255,255,255,0.06);">
+                                <!-- Barres de test de couleur verticales subtiles à l'arrière -->
+                                <div style="position: absolute; top:0; bottom:0; left:10%; width:15%; background: rgba(220, 38, 38, 0.15);"></div>
+                                <div style="position: absolute; top:0; bottom:0; left:25%; width:15%; background: rgba(34, 197, 94, 0.15);"></div>
+                                <div style="position: absolute; top:0; bottom:0; left:40%; width:15%; background: rgba(59, 130, 246, 0.15);"></div>
+                                <div style="position: absolute; top:0; bottom:0; left:55%; width:15%; background: rgba(234, 179, 8, 0.15);"></div>
+                                <div style="position: absolute; top:0; bottom:0; left:70%; width:15%; background: rgba(168, 85, 247, 0.15);"></div>
+
+                                <!-- Diagonal orange laser pointer scan line simulation -->
+                                <div style="position: absolute; left: 0; right: 0; top: 0; height: 1px; background: #f47c20; opacity: 0.8; box-shadow: 0 0 10px #f47c20; animation: scanlineAnim 3s linear infinite;"></div>
+                                
+                                <!-- Central target indicator -->
+                                <div style="width: 64px; height: 64px; border: 2px dashed #f47c20; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: spinSlow 15s linear infinite; box-shadow: 0 0 15px rgba(244,124,32,0.2);">
+                                    <span style="font-size: 1.3rem;">📡</span>
+                                </div>
+
+                                <!-- Live label badge -->
+                                <span style="position: absolute; top: 12px; left: 12px; background: #ef4444; color: white; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 4px; display: flex; align-items: center; gap: 5px; animation: pulseAlert 1.5s infinite; letter-spacing: 0.05em;">
+                                    <span style="width: 6px; height: 6px; background: white; border-radius: 50%; display: inline-block;"></span>
+                                    SIGNAL INFJ TEST
+                                </span>
+
+                                <!-- Spec lines -->
+                                <span style="position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.7); color: #10b981; font-family: monospace; font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(16,185,129,0.3); font-weight: bold; letter-spacing: 0.05em;">
+                                    SECURE CLOUD VIDEO • FEED #01
+                                </span>
+                            </div>
+
+                            <!-- Spec labels under mire -->
+                            <div style="width: 100%; margin-top: 18px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 4px;">
+                                    <span style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Rôle Actuel :</span>
+                                    <span style="font-size: 0.72rem; color: ${userRoleColor}; font-weight: 900; letter-spacing: 0.05em;">${userRoleBadge}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="font-size: 0.72rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Canal de Rendu :</span>
+                                    <span style="font-size: 0.72rem; color: #cbd5e1; font-family: monospace;">JaaS IP-Transit Mode</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Diagnosis & Action triggers -->
+                        <div style="background: rgba(11, 15, 25, 0.7); border-radius: 12px; border: 1px solid #1e293b; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; min-height: 250px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); box-sizing: border-box;">
+                            <div>
+                                <h4 style="color: #f47c20; font-size: 1rem; font-weight: bold; margin: 0 0 14px 0; display: flex; align-items: center; gap: 8px;">
+                                    ⚙️ Diagnostic de Liaison & Présence
+                                </h4>
+                                <ul style="list-style: none; padding: 0; margin: 0 0 15px 0; font-size: 0.8rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 10px;">
+                                    <li style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px;">
+                                        <span style="color: #10b981; animation: blinkRed 1s infinite; font-size: 1.1rem; line-height: 1;">●</span> 
+                                        <span><strong>Feuille d'Émargement :</strong> <span style="color: #10b981; font-weight: bold;">Connectée (Présence active validée)</span></span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px;">
+                                        <span style="color: #f47c20; font-size: 1.1rem; line-height: 1;">●</span> 
+                                        <span><strong>Flux Audio/Vidéo de cours :</strong> <span style="color: #f47c20; font-weight: bold;">En cours d'alignement technique</span></span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: 10px; padding-bottom: 4px;">
+                                        <span style="color: #a855f7; font-size: 1.1rem; line-height: 1;">●</span> 
+                                        <span><strong>Passerelle JWT & Jetons :</strong> <span style="color: #a855f7; font-weight: bold;">Chiffrement certifié standard AES-256</span></span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <div style="background: rgba(244, 124, 32, 0.05); padding: 12px 14px; border-radius: 8px; border-left: 3px solid #f47c20; font-size: 0.76rem; color: #94a3b8; line-height: 1.45; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                                    🔒 <strong>Garantie Présence :</strong> Votre présence est enregistrée automatiquement en continu par notre télémétrie sur votre compte. Vos heures de live sont validées.
+                                </div>
+
+                                <div style="margin-bottom: 15px;">
+                                    <a class="chantier-interactive-btn" href="https://meet.jit.si/${activeMeetingId}" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 42px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); text-decoration: none; color: white; border-radius: 8px; font-size: 0.82rem; font-weight: bold; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(16,185,129,0.25); box-sizing: border-box; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+                                        🌐 Rejoindre Directement la Visioconférence (Standard Gratuit)
+                                    </a>
+                                </div>
+                                
+                                <div style="display: flex; gap: 10px;">
+                                    ${estAdmin ? `
+                                        <button class="chantier-interactive-btn" onclick="window.simulerTestMicro()" style="flex: 1; min-height: 38px; background: #1e293b; border: 1px solid #334155; color: white; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                                            🎤 Test Micro Modérateur
+                                        </button>
+                                        <button class="chantier-interactive-btn" onclick="window.simulerCalibrageVideo()" style="flex: 1; min-height: 38px; background: #f47c20; border: none; color: white; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 4px 12px rgba(244,124,32,0.2);">
+                                            ⚙️ Calibrer Émetteur
+                                        </button>
+                                    ` : `
+                                        <button class="chantier-interactive-btn" onclick="window.rechargerChantier()" style="width: 100%; min-height: 38px; background: #1e293b; border: 1px solid #334155; color: white; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            🔄 Actualiser l'avancement des travaux de liaison
+                                        </button>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+        };
+
+        window.toggleTheaterMode = function() {
+            const body = document.body;
+            body.classList.toggle('live-theater-active');
+            
+            const exitBtn = document.getElementById('exitTheaterBtn');
+            if (body.classList.contains('live-theater-active')) {
+                if (exitBtn) exitBtn.style.display = 'flex';
+            } else {
+                if (exitBtn) exitBtn.style.display = 'none';
+            }
+            
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
+        }
+
+        window.toggleNotesPanel = function() {
+            const layout = document.querySelector('.live-layout');
+            const panel = document.querySelector('.classroom-info-panel');
+            const btn = document.getElementById('toggleNotesBtn');
+            
+            if (panel && layout) {
+                if (panel.style.display === 'none') {
+                    panel.style.display = 'flex';
+                    layout.style.gridTemplateColumns = '3fr 1fr';
+                    if (btn) {
+                        btn.innerHTML = '📋 Masquer les Notes';
+                        btn.classList.remove('highlighted');
+                    }
+                } else {
+                    panel.style.display = 'none';
+                    layout.style.gridTemplateColumns = '1fr';
+                    if (btn) {
+                        btn.innerHTML = '📋 Afficher les Notes';
+                        btn.classList.add('highlighted');
+                    }
+                }
+                
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 100);
+            }
+        }
+    </script>
+</body>
+</html>

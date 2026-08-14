@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formation - Institut National de Formation des Jeunes</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="navigation.css">
+    <link rel="stylesheet" href="back-button.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Navigation sera créée dynamiquement par navigation-standalone.js -->
+    <main>
+        <section class="hero">
+            <div class="hero-content" style="justify-content:center;">
+                <div class="hero-text">
+                    <h2>Formation intensive en<br>LEADERSHIP ORGANISATIONNEL</h2>
+                    <p>Développez vos compétences de leader et boostez votre carrière !</p>
+                </div>
+            </div>
+        </section>
+
+        <section style="background: linear-gradient(135deg, #003366 0%, #1a3365 100%); color: white; padding: 40px; border-radius: 15px; text-align: center; margin-top: 40px;">
+            <h2 style="color: white; margin-bottom: 20px;">Prêt à commencer votre formation ?</h2>
+            <p style="font-size: 1.1em; margin-bottom: 30px;">Rejoignez-nous dès maintenant et développez vos compétences de leader !</p>
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                <a href="inscription.html?course=leadership" style="background: #f47c20; color: white; padding: 15px 30px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s ease; display: inline-block;">
+                    S'inscrire maintenant
+                </a>
+                <a href="contact.html" style="background: transparent; color: white; padding: 15px 30px; border: 2px solid #f47c20; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s ease; display: inline-block;">
+                    Plus d'informations
+                </a>
+            </div>
+        </section>
+
+        <section>
+            <h2>Formations Disponibles</h2>
+            
+            <!-- Onglets de sélection -->
+            <div class="formations-tabs">
+                <button class="tab-btn active" onclick="switchTab('preenregistre')">
+                    <span>📼</span> Programmes de formation
+                </button>
+                <button class="tab-btn" onclick="switchTab('en-ligne')">
+                    <span>🌐</span> Cours en ligne
+                </button>
+                <button class="tab-btn" onclick="switchTab('videos')">
+                    <span>🎥</span> Vidéos de cours
+                </button>
+            </div>
+
+            <!-- Onglet 1: Programmes de formation -->
+            <div id="tab-preenregistre" class="tab-content active">
+                <div class="premium-courses-grid" id="premiumCoursesGrid">
+                    <!-- Chargé dynamiquement -->
+                    <div class="loading-state" style="text-align: center; padding: 40px; grid-column: 1 / -1; color: #64748b; font-weight: 500;">
+                        Chargement des programmes de formation professionnels...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet 2: Cours en ligne -->
+            <div id="tab-en-ligne" class="tab-content">
+                <div style="max-width: 450px; margin: 0 auto; text-align: center; padding: 25px 20px; background: linear-gradient(135deg, #fff7f0 0%, #fef5e7 100%); border-radius: 12px; border: 1px solid rgba(244, 124, 32, 0.15); box-shadow: 0 4px 12px rgba(244, 124, 32, 0.04);">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">🌐</div>
+                    <h3 style="color: #003366; margin: 0 0 6px 0; font-size: 1.15rem; font-weight: 700;">Classe Virtuelle en Direct</h3>
+                    <p style="color: #475569; font-size: 0.85rem; line-height: 1.45; margin-bottom: 18px;">Rejoignez la classe virtuelle interactive en direct sur Google Meet pour échanger directement avec vos enseignants.</p>
+                    <button onclick="redirectToLive()" class="course-btn orange-btn" style="display: inline-block; cursor: pointer; border: none; font-size: 0.9rem; font-weight: bold; width: auto; max-width: 220px; padding: 10px 25px; border-radius: 25px;">
+                        Suivre le cours
+                    </button>
+                </div>
+            </div>
+
+            <!-- Onglet 3: Vidéos de cours -->
+            <div id="tab-videos" class="tab-content">
+                <p style="text-align: center; color: #475569; margin-bottom: 25px; font-weight: 500; font-size: 0.95em;">Accédez directement aux enregistrements vidéo de nos différents séminaires et modules d'enseignement.</p>
+                <div class="premium-courses-grid" id="videoCoursesGrid">
+                    <!-- Leadership -->
+                    <div class="premium-course-card orange-border">
+                        <span class="course-badge" style="background: rgba(244, 124, 32, 0.1); color: #f47c20;">Vidéos</span>
+                        <h3>Leadership Organisationnel</h3>
+                        <p>Découvrez les techniques d'organisation, de gestion d'équipe et d'affirmation en tant que leader.</p>
+                        <a href="video.html?course=leadership" class="course-btn orange-btn" style="display: block; text-decoration: none; text-align: center; font-size: 0.9rem; font-weight: bold; padding: 10px 15px; border-radius: 25px;">
+                            Visionner les cours
+                        </a>
+                    </div>
+                    <!-- Web -->
+                    <div class="premium-course-card blue-border">
+                        <span class="course-badge" style="background: rgba(0, 51, 102, 0.1); color: #003366;">Vidéos</span>
+                        <h3>Création de Site Web</h3>
+                        <p>Apprenez à concevoir, développer, et déployer des sites web professionnels modernes de A à Z.</p>
+                        <a href="video.html?course=web" class="course-btn blue-btn" style="display: block; text-decoration: none; text-align: center; font-size: 0.9rem; font-weight: bold; padding: 10px 15px; border-radius: 25px;">
+                            Visionner les cours
+                        </a>
+                    </div>
+                    <!-- Entrepreneuriat -->
+                    <div class="premium-course-card green-border">
+                        <span class="course-badge" style="background: rgba(40, 167, 69, 0.1); color: #28a745;">Vidéos</span>
+                        <h3>Entrepreneuriat</h3>
+                        <p>Maîtrisez les ficelles de la création d'entreprise, du business model et de la levée de fonds.</p>
+                        <a href="video.html?course=entrepreneuriat" class="course-btn green-btn" style="display: block; text-decoration: none; text-align: center; font-size: 0.9rem; font-weight: bold; padding: 10px 15px; border-radius: 25px;">
+                            Visionner les cours
+                        </a>
+                    </div>
+                    <!-- Communication -->
+                    <div class="premium-course-card orange-border">
+                        <span class="course-badge" style="background: rgba(244, 124, 32, 0.1); color: #f47c20;">Vidéos</span>
+                        <h3>Communication</h3>
+                        <p>Perfectionnez votre communication interpersonnelle, la prise de parole publique et l'influence.</p>
+                        <a href="video.html?course=communication" class="course-btn orange-btn" style="display: block; text-decoration: none; text-align: center; font-size: 0.9rem; font-weight: bold; padding: 10px 15px; border-radius: 25px;">
+                            Visionner les cours
+                        </a>
+                    </div>
+                    <!-- Marketing -->
+                    <div class="premium-course-card blue-border">
+                        <span class="course-badge" style="background: rgba(0, 51, 102, 0.1); color: #003366;">Vidéos</span>
+                        <h3>Marketing Digital</h3>
+                        <p>Apprenez le marketing sur les réseaux sociaux, le SEO, pour attirer et convertir vos prospects.</p>
+                        <a href="video.html?course=marketing" class="course-btn blue-btn" style="display: block; text-decoration: none; text-align: center; font-size: 0.9rem; font-weight: bold; padding: 10px 15px; border-radius: 25px;">
+                            Visionner les cours
+                        </a>
+                    </div>
+                    <!-- Dropshipping -->
+                    <div class="premium-course-card green-border">
+                        <span class="course-badge" style="background: rgba(40, 167, 69, 0.1); color: #28a745;">Vidéos</span>
+                        <h3>Dropshipping</h3>
+                        <p>Vendez des produits en ligne sans stock et apprenez à gérer une boutique de commerce électronique.</p>
+                        <a href="video.html?course=dropshipping" class="course-btn green-btn" style="display: block; text-decoration: none; text-align: center; font-size: 0.9rem; font-weight: bold; padding: 10px 15px; border-radius: 25px;">
+                            Visionner les cours
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section>
+            <div class="formation-flex">
+                <div class="formation-modules">
+                    <h2>MODULES DE FORMATION :</h2>
+                    <ul>
+                        <li><strong>Module 1 :</strong> Introduction au leadership organisationnel</li>
+                        <li><strong>Module 2 :</strong> Développement personnel du leader</li>
+                        <li><strong>Module 3 :</strong> Prise de parole en public</li>
+                        <li><strong>Module 4 :</strong> Gestion du temps et des priorités</li>
+                        <li><strong>Module 5 :</strong> Management des équipes</li>
+                        <li><strong>Module 6 :</strong> Communication en organisation</li>
+                        <li><strong>Module 7 :</strong> Gestion des conflits</li>
+                        <li><strong>Module 8 :</strong> Prise de décisions stratégiques</li>
+                    </ul>
+                </div>
+                <div class="formation-images">
+                    <figure>
+                        <img src="/images/handshake_deal.jpeg" alt="Collaboration et accord" />
+                    </figure>
+                    <figure>
+                        <img src="/images/pullman_toulouse.jpeg" alt="Cadre professionnel" />
+                    </figure>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Informations pratiques</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 40px;">
+                <div style="background: linear-gradient(135deg, #fff7f0 0%, #fef5e7 100%); padding: 25px; border-radius: 15px; border-left: 5px solid #f47c20; box-shadow: 0 4px 15px rgba(244, 124, 32, 0.1);">
+                    <h3 style="color: #003366; margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                        🎓 <span>Certification</span>
+                    </h3>
+                    <p style="margin: 0; color: #1a3365; font-weight: 500;">Certificat d'aptitude professionnelle délivré à la fin de la formation</p>
+                </div>
+                <div style="background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 100%); padding: 25px; border-radius: 15px; border-left: 5px solid #003366; box-shadow: 0 4px 15px rgba(0, 51, 102, 0.1);">
+                    <h3 style="color: #003366; margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                        💰 <span>Tarif</span>
+                    </h3>
+                    <p id="gratuit" style="margin: 0; color: #f47c20; font-weight: bold; font-size: 1.2em;">Formation Gratuite</p>
+                </div>
+                <div style="background: linear-gradient(135deg, #f0fff4 0%, #e8f5e8 100%); padding: 25px; border-radius: 15px; border-left: 5px solid #28a745; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.1);">
+                    <h3 style="color: #003366; margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                        💻 <span>Modalité</span>
+                    </h3>
+                    <p style="margin: 0; color: #1a3365; font-weight: 500;">En ligne via Google Meet / WhatsApp</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Objectifs de la formation</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div style="background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-top: 3px solid #f47c20;">
+                    <h4 style="color: #003366; margin-top: 0;">🎯 Développement personnel</h4>
+                    <p style="color: #666; margin: 0;">Renforcer la confiance en soi et les compétences de leadership</p>
+                </div>
+                <div style="background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-top: 3px solid #003366;">
+                    <h4 style="color: #003366; margin-top: 0;">🗣️ Communication</h4>
+                    <p style="color: #666; margin: 0;">Améliorer la prise de parole et la communication interpersonnelle</p>
+                </div>
+                <div style="background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-top: 3px solid #1a3365;">
+                    <h4 style="color: #003366; margin-top: 0;">👥 Management</h4>
+                    <p style="color: #666; margin: 0;">Apprendre à gérer et motiver une équipe efficacement</p>
+                </div>
+                <div style="background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-top: 3px solid #f47c20;">
+                    <h4 style="color: #003366; margin-top: 0;">⚡ Prise de décision</h4>
+                    <p style="color: #666; margin: 0;">Développer l'esprit critique et la capacité de décision</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    <footer>
+        <!-- Logos des partenaires officiels -->
+        <div class="footer-logos">
+            <div class="footer-logos-row">
+                <img src="/images/AKOLAD.png" alt="Logo AKOLAD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/michel_jd_groupe_ltd.png" alt="Logo Michel-JD Groupe LTD" class="footer-logo" referrerPolicy="no-referrer" />
+                <img src="/images/weel_tech_logo.png" alt="Logo WEEL TECH" class="footer-logo" referrerPolicy="no-referrer" />
+            </div>
+            <div class="footer-socials">
+                <a href="https://facebook.com" target="_blank" class="footer-social" aria-label="Facebook">
+                    <img src="/images/facebook.png" alt="Facebook" />
+                </a>
+                <a href="https://wa.me/50946341547" target="_blank" class="footer-social" aria-label="WhatsApp">
+                    <img src="/images/whatsapp.webp" alt="WhatsApp" />
+                </a>
+                <a href="mailto:institutnationaldfj@gmail.com" class="footer-social" aria-label="Email">
+                    <img src="/images/email.png" alt="Email" />
+                </a>
+            </div>
+            <p class="footer-copyright">&copy; 2024 Institut National de Formation des Jeunes. Tous droits réservés.</p>
+        </div>
+    </footer>
+    <script type="module" src="script.js"></script>
+    <script>
+        function checkUserLogin() {
+            // Vérifier si l'utilisateur est connecté via les informations persistées par Supabase
+            const user = localStorage.getItem('user');
+            return !!user;
+        }
+
+        function redirectToCourse(courseType) {
+            window.location.href = `inscription.html?course=${courseType}`;
+        }
+
+        function redirectToLive() {
+            // Vérifier si l'utilisateur est connecté
+            const isLoggedIn = checkUserLogin();
+            
+            if (isLoggedIn) {
+                // Si connecté, rediriger vers la classe virtuelle Google Meet intégrée
+                window.location.href = 'live.html';
+            } else {
+                // Si pas connecté, rediriger vers la page de connexion, puis vers le live
+                window.location.href = 'login.html?redirect=live.html';
+            }
+        }
+
+        function switchTab(tabId) {
+            // Désactiver tous les onglets
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Activer le bouton de l'onglet sélectionné
+            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.getAttribute('onclick').includes(tabId));
+            if (activeBtn) activeBtn.classList.add('active');
+            
+            // Activer le bloc d'onglet correspondant
+            const activeContent = document.getElementById(`tab-${tabId}`);
+            if (activeContent) activeContent.classList.add('active');
+        }
+    </script>
+    <script type="module" src="formation.js"></script>
+    <script type="module" src="navigation-standalone.js"></script>
+    <script type="module" src="back-button.js"></script>
+</body>
+</html>
+
+
+

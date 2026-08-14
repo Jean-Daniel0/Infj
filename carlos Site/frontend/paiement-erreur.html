@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Échec du Paiement - INFJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            background-color: #fef2f2;
+            color: #ef4444;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 12px;
+        }
+        p {
+            font-size: 15px;
+            color: #64748b;
+            line-height: 1.6;
+            margin: 0 0 24px;
+        }
+        .ref-box {
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #334155;
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+        }
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn {
+            background-color: #f47c20;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 14px 28px;
+            border-radius: 10px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(244, 124, 32, 0.2);
+        }
+        .btn:hover {
+            background-color: #e06b12;
+            transform: translateY(-1px);
+        }
+        .btn.secondary {
+            background-color: #f1f5f9;
+            color: #475569;
+            box-shadow: none;
+        }
+        .btn.secondary:hover {
+            background-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon-circle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        </div>
+
+        <h1>Paiement Non Validé</h1>
+        <p>Le règlement par MonCash n'a pas pu aboutir ou a été interrompu. Pas d'inquiétude, aucun montant n'a été prélevé sur votre compte.</p>
+
+        <div class="ref-box">
+            Référence : <span id="ref-id">--</span>
+        </div>
+
+        <div class="btn-container">
+            <a href="cours.html" class="btn">Réessayer le paiement</a>
+            <a href="contact.html" class="btn secondary">Contacter le support client</a>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref') || 'N/A';
+        document.getElementById('ref-id').textContent = ref;
+    </script>
+</body>
+</html>

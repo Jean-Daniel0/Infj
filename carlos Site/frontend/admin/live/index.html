@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard des Cours en Direct (Admin) - INFJ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../courses.css">
+    <link rel="stylesheet" href="../../navigation.css">
+    <link rel="stylesheet" href="../../back-button.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://8x8.vc/vpaas-magic-a0923f1ee969475aaaae4297b102f416/external_api.js"></script>
+    <style>
+        .admin-container {
+            width: 100%;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .admin-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .admin-title-area h2 {
+            color: #003366;
+            font-size: 1.8rem;
+            margin: 0 0 5px 0;
+            font-weight: 800;
+        }
+
+        .admin-title-area p {
+            color: #64748b;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        /* Stats Blocks */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 5px solid #003366;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .stat-card.orange-border {
+            border-left-color: #f47c20;
+        }
+
+        .stat-card.green-border {
+            border-left-color: #22c55e;
+        }
+
+        .stat-card.purple-border {
+            border-left-color: #8b5cf6;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            background: #f1f5f9;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-info h4 {
+            margin: 0;
+            color: #64748b;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-info p {
+            margin: 3px 0 0 0;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #1e293b;
+        }
+
+        /* Layout Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.6fr 1.4fr;
+            gap: 25px;
+            align-items: start;
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card panels */
+        .panel-card {
+            background: white;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .panel-header {
+            background: #003366;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #f47c20;
+        }
+
+        .panel-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .panel-content {
+            padding: 20px;
+        }
+
+        /* Create Button */
+        .action-primary-btn {
+            background: linear-gradient(135deg, #f47c20 0%, #d4630e 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(244, 124, 32, 0.3);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(244, 124, 32, 0.45);
+        }
+
+        .action-secondary-btn {
+            background: #f1f5f9;
+            color: #334155;
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-secondary-btn:hover {
+            background: #e2e8f0;
+        }
+
+        /* Live Session Cards */
+        .sessions-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 650px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .session-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .session-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        .session-card.status-en_cours {
+            border-left: 4px solid #ef4444;
+            background: #fffbfa;
+        }
+
+        .session-card.status-planifie {
+            border-left: 4px solid #3b82f6;
+        }
+
+        .session-card.status-termine {
+            border-left: 4px solid #10b981;
+            background: #f0fdf4;
+            opacity: 0.85;
+        }
+
+        .session-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .session-title {
+            color: #003366;
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .badge-status {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .badge-status.en_cours {
+            background: #fee2e2;
+            color: #ef4444;
+            animation: blink 1.5s infinite;
+        }
+
+        .badge-status.planifie {
+            background: #dbeafe;
+            color: #3b82f6;
+        }
+
+        .badge-status.termine {
+            background: #d1fae5;
+            color: #10b981;
+        }
+
+        .badge-status.annule {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        @keyframes blink {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+
+        .session-details {
+            font-size: 0.82rem;
+            color: #475569;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 12px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .session-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .session-actions button, .session-actions a {
+            padding: 5px 12px;
+            font-size: 0.78rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-live-start {
+            background: #003366;
+            color: white;
+        }
+
+        .btn-live-start:hover {
+            background: #114b8a;
+        }
+
+        .btn-live-join {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-live-join:hover {
+            background: #dc2626;
+        }
+
+        .btn-live-end {
+            background: #e2e8f0;
+            color: #1e293b;
+            border: 1px solid #cbd5e1 !important;
+        }
+
+        .btn-live-end:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-live-edit {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1 !important;
+        }
+
+        .btn-live-edit:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-live-attendance {
+            background: #f47c20;
+            color: white;
+        }
+
+        .btn-live-attendance:hover {
+            background: #d4630e;
+        }
+
+        .btn-live-delete {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .btn-live-delete:hover {
+            background: #fecaca;
+        }
+
+        /* Attendance List Styles */
+        .attendance-card {
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .attendance-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            padding: 10px 12px;
+            border-bottom: 1px solid #cbd5e1;
+            text-align: left;
+        }
+
+        .attendance-table td {
+            padding: 10px 12px;
+            border-bottom: 1px dashed #cbd5e1;
+            color: #1e293b;
+        }
+
+        .attendance-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .presence-active-badge {
+            background: #d1fae5;
+            color: #10b981;
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.72rem;
+            display: inline-block;
+        }
+
+        .presence-inactive-badge {
+            background: #f1f5f9;
+            color: #64748b;
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 0.72rem;
+            display: inline-block;
+        }
+
+        .selected-session-card {
+            outline: 2px solid #003366;
+            box-shadow: 0 4px 15px rgba(0, 51, 102, 0.1) !important;
+        }
+
+        /* Modal Salon Formateur Styles */
+        .modal-salon-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.95);
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+        }
+
+        .modal-salon-content {
+          background: #0c1445;
+          border-radius: 16px;
+          width: 100%;
+          max-width: 1200px;
+          max-height: 95vh;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .modal-salon-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 20px;
+          background: linear-gradient(
+            90deg, #0c1445, #1e40af
+          );
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .salon-live-badge {
+          background: #ef4444;
+          color: #fff;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 3px 10px;
+          border-radius: 999px;
+          animation: pulse 2s infinite;
+          display: inline-block;
+          margin-bottom: 6px;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+
+        .modal-salon-header h2 {
+          color: #fff;
+          font-size: 1.1rem;
+          margin: 0;
+        }
+
+        .modal-salon-header p {
+          color: rgba(255,255,255,0.5);
+          font-size: 12px;
+          margin: 0;
+        }
+
+        .btn-fermer-salon {
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          border: none;
+          background: rgba(255,255,255,0.1);
+          color: #fff;
+          font-size: 16px;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .btn-fermer-salon:hover {
+          background: rgba(239,68,68,0.5);
+        }
+
+        .salon-controls {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 20px;
+          background: #111827;
+          flex-wrap: wrap;
+        }
+
+        .btn-terminer {
+          padding: 8px 16px;
+          border-radius: 8px;
+          border: none;
+          background: #ef4444;
+          color: #fff;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          transition: opacity 0.15s;
+        }
+
+        .btn-terminer:hover { opacity: 0.85; }
+
+        .btn-copier-lien {
+          padding: 8px 16px;
+          border-radius: 8px;
+          border: none;
+          background: #2563eb;
+          color: #fff;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          transition: opacity 0.15s;
+        }
+
+        .btn-copier-lien:hover { opacity: 0.85; }
+
+        .participants-count {
+          margin-left: auto;
+          color: #fff;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .btn-ouvrir-salon {
+          padding: 10px 18px;
+          border-radius: 10px;
+          border: none;
+          background: linear-gradient(
+            90deg, #2563eb, #0d9488
+          );
+          color: #fff;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.15s;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .btn-ouvrir-salon:hover {
+          opacity: 0.9;
+          transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <main class="admin-container">
+        <!-- Breadcrumb & Back -->
+        <div style="margin-bottom: 15px;">
+            <a href="../../admin-videos.html" class="action-secondary-btn">⬅️ Retour à l'Admin Général</a>
+        </div>
+
+        <div class="admin-header-row">
+            <div class="admin-title-area">
+                <h2>📹 Espace de Gestion des Cours en Direct</h2>
+                <p>Planifiez, lancez des classes virtuelles interactives et suivez l'émargement automatique des étudiants de l'INFJ.</p>
+            </div>
+            <div>
+                <a href="creer.html" class="action-primary-btn">➕ Planifier / Créer un Live</a>
+            </div>
+        </div>
+
+        <!-- Mode Chantier Admin Notification Alert -->
+        <div style="background: linear-gradient(135deg, rgba(244,124,32,0.06) 0%, rgba(212,99,14,0.1) 100%); border: 1px solid rgba(244,124,32,0.3); border-radius: 12px; padding: 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+            <div style="font-size: 2.5rem; flex-shrink: 0;">🚧</div>
+            <div style="flex: 1; min-width: 250px;">
+                <h4 style="color: #d4630e; margin: 0 0 5px 0; font-size: 1.05rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
+                    Travaux d'intégration de la classe virtuelle (En Chantier)
+                </h4>
+                <p style="color: #475569; margin: 0; font-size: 0.88rem; line-height: 1.55;">
+                    La passerelle de visioconférence sécurisée est en cours d'optimisation technique. L'ouverture d'un salon formateur redirige vers l'espace de direct contenant une mire de calibrage interactive et des tests d'émargement.
+                    <br><strong>Note importante :</strong> L'enregistrement des étudiants par émargement automatique en direct reste <strong>100% opérationnel</strong>.
+                </p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <span style="background: #f47c20; color: white; border-radius: 8px; padding: 8px 15px; font-weight: bold; font-size: 0.78rem; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(244,124,32,0.2);">
+                    🔧 Phase Bêta active
+                </span>
+            </div>
+        </div>
+
+        <!-- Section Statistiques -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📡</div>
+                <div class="stat-info">
+                    <h4>Total Cours</h4>
+                    <p id="statTotalLives">0</p>
+                </div>
+            </div>
+            <div class="stat-card green-border">
+                <div class="stat-icon">🔴</div>
+                <div class="stat-info">
+                    <h4>En Direct</h4>
+                    <p id="statActiveLives">0</p>
+                </div>
+            </div>
+            <div class="stat-card orange-border">
+                <div class="stat-icon">📅</div>
+                <div class="stat-info">
+                    <h4>Planifiés</h4>
+                    <p id="statPlannedLives">0</p>
+                </div>
+            </div>
+            <div class="stat-card purple-border">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <h4>Présences uniques</h4>
+                    <p id="statTotalPresences">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Split Layout -->
+        <div class="dashboard-grid">
+            <!-- Left Panel: Session Cards -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h3>📚 Cours Planifiés et Historique</h3>
+                </div>
+                <div class="panel-content">
+                    <div id="sessions-list" class="sessions-list-container">
+                        <p style="text-align: center; color: #64748b; padding: 20px;">Chargement des visioconférences en cours...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Attendees Tracking -->
+            <div class="panel-card">
+                <div class="panel-header" style="background: #1a3365;">
+                    <h3 id="emargementPanelTitle">👥 Feuille d'Émargement</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="action-secondary-btn" style="padding: 4px 10px; font-size: 0.75rem; background: #002244; color: white; border: none;" onclick="refreshSelectedAttendance()">🔄 Actualiser</button>
+                        <button class="action-secondary-btn" style="padding: 4px 10px; font-size: 0.75rem; background: #22c55e; color: white; border: none;" onclick="exportCurrentAttendance()">📥 CSV</button>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="attendance-card">
+                        <div style="overflow-x: auto;">
+                            <table class="attendance-table">
+                                <thead>
+                                    <tr>
+                                        <th>Étudiant / Email</th>
+                                        <th>Arrivée & Présence</th>
+                                        <th>Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendance-list-body">
+                                    <tr>
+                                        <td colspan="3" style="text-align: center; color: #64748b; padding: 30px;">
+                                            Sélectionnez le bouton 📊 Émargement d'un cours pour charger sa feuille d'appel.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="../../navigation-standalone.js"></script>
+    <script type="module" src="../../back-button.js"></script>
+    <script type="module">
+        import { supabase, utils } from '../../supabase-config.js';
+
+        let selectedSessionId = null;
+        let selectedSessionTitle = "";
+        let allSessionsCached = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Autorisation : Admin seulement
+            const isAdmin = await utils.isAdmin();
+            if (!isAdmin) {
+                alert("Accès réservé exclusivement aux administrateurs de l'INFJ.");
+                window.location.href = '../../index.html';
+                return;
+            }
+
+            // 2. Charger les sessions
+            await loadDashboardLives();
+        });
+
+        // Charger Dashboard des lives avec stats
+        async function loadDashboardLives() {
+            const listEl = document.getElementById('sessions-list');
+            if (!listEl) return;
+
+            try {
+                // Tenter de charger les sessions de visioconférences
+                const { data: rawSessions, error } = await supabase
+                    .from('live_sessions')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                let sessions = rawSessions || [];
+                allSessionsCached = sessions;
+
+                // Tenter de charger les noms de formations pour chaque session pour un affichage propre
+                const { data: rawFormations } = await supabase
+                    .from('formations')
+                    .select('id, titre');
+                const formMap = {};
+                if (rawFormations) {
+                    rawFormations.forEach(f => {
+                        formMap[f.id] = f.titre;
+                    });
+                }
+
+                // Tenter d'obtenir les décomptes de présences pour l'affichage statistique
+                const { data: rawAttendance } = await supabase
+                    .from('live_attendance')
+                    .select('session_id, last_seen_at');
+
+                const stats = {
+                    total: sessions.length,
+                    active: sessions.filter(s => s.statut === 'en_cours').length,
+                    planned: sessions.filter(s => s.statut === 'planifie').length,
+                    presences: rawAttendance ? rawAttendance.length : 0
+                };
+
+                // Mettre à jour les indicateurs
+                document.getElementById('statTotalLives').textContent = stats.total;
+                document.getElementById('statActiveLives').textContent = stats.active;
+                document.getElementById('statPlannedLives').textContent = stats.planned;
+                document.getElementById('statTotalPresences').textContent = stats.presences;
+
+                if (sessions.length === 0) {
+                    listEl.innerHTML = `
+                        <div style="text-align: center; color: #64748b; padding: 40px 10px;">
+                            <span style="font-size: 2.5rem; display: block; margin-bottom: 10px;">📅</span>
+                            Aucun cours en direct n'a encore été créé.
+                        </div>`;
+                    return;
+                }
+
+                listEl.innerHTML = sessions.map(session => {
+                    const isSelected = selectedSessionId === session.id;
+                    const formatTime = session.date_prevue 
+                        ? new Date(session.date_prevue).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                        : 'Non programmée';
+                    
+                    const priceLabel = session.gratuit ? '🆓 Gratuit' : `💰 ${session.prix} HTG`;
+                    const hasPassword = session.mot_de_passe ? `🔒 ${session.mot_de_passe}` : '🔓 Aucun mot de passe';
+                    const formationTitre = formMap[session.formation_id] || 'Live général (sans formation)';
+
+                    // Calculer le nombre de présences pour cette session
+                    const attendanceCount = rawAttendance ? rawAttendance.filter(a => a.session_id === session.id).length : 0;
+
+                    return `
+                        <div class="session-card status-${session.statut} ${isSelected ? 'selected-session-card' : ''}" id="session-card-${session.id}">
+                            <div class="session-card-header">
+                                <h4 class="session-title">${session.titre}</h4>
+                                <span class="badge-status ${session.statut || 'planifie'}">
+                                    ${session.statut === 'en_cours' ? '🔴 EN DIRECT' : session.statut === 'planifie' ? '📅 Planifié' : '✅ Terminé'}
+                                </span>
+                            </div>
+                            <div class="session-details">
+                                <div class="detail-item"><strong>📚 Formation :</strong> ${formationTitre}</div>
+                                <div class="detail-item"><strong>📅 Horaire :</strong> ${formatTime}</div>
+                                <div class="detail-item"><strong>👥 Limite :</strong> Max ${session.max_participants || 50} participants</div>
+                                <div class="detail-item"><strong>🔑 Accès :</strong> ${priceLabel} • ${hasPassword}</div>
+                                <div class="detail-item" style="color: #64748b; font-family: monospace; font-size: 0.75rem; background: #f8fafc; padding: 4px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                    <strong>ID Jitsi :</strong> ${session.meeting_id}
+                                </div>
+                            </div>
+                            
+                            <div class="session-actions">
+                                ${session.statut !== 'annule' ? `
+                                    <button 
+                                        onclick="window.ouvrirMonSalon('${session.id}')"
+                                        class="btn-ouvrir-salon">
+                                        🎥 Ouvrir mon salon
+                                    </button>
+                                ` : ''}
+
+                                ${session.statut === 'planifie' ? `
+                                    <button class="btn-live-start" onclick="window.demarrerLive('${session.id}')">🚀 Démarrer</button>
+                                    <a class="btn-live-edit" href="modifier.html?id=${session.id}">✏️ Modifier</a>
+                                    <button class="btn-live-delete" onclick="window.annulerLive('${session.id}')">❌ Annuler</button>
+                                ` : ''}
+
+                                ${session.statut === 'en_cours' ? `
+                                    <button class="btn-live-join" onclick="window.rejoindreAdmin('${session.id}', '${session.meeting_id}')">🎥 Rejoindre</button>
+                                    <button class="btn-live-end" onclick="window.terminerLive('${session.id}')">⏹️ Terminer</button>
+                                ` : ''}
+
+                                <button class="btn-live-attendance" onclick="window.voirPresences('${session.id}', '${session.titre}')">📊 Émargement (${attendanceCount})</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("Erreur de chargement du dashboard lives:", err);
+                listEl.innerHTML = `<p style="color: #ef4444; text-align: center; font-weight: bold; padding: 25px;">Erreur de communication avec la base de données. Veuillez réessayer.</p>`;
+            }
+        }
+
+        // Démarrer un live (Change statut en_cours)
+        window.demarrerLive = async function(sessionId) {
+            if (!confirm("Voulez-vous démarrer ce cours en direct maintenant ? Les élèves autorisés recevront l'accès.")) return;
+
+            try {
+                const { error } = await supabase
+                    .from('live_sessions')
+                    .update({
+                        statut: 'en_cours',
+                        is_active: true,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', sessionId);
+
+                if (error) throw error;
+
+                // Envoyer des notifications aux inscrits
+                const session = allSessionsCached.find(s => s.id === sessionId);
+                if (session && session.formation_id) {
+                    await notifierElevesFormation(session.formation_id, session);
+                }
+
+                alert("Le cours en direct a démarré avec succès ! Redirection vers la vidoéconférence.");
+                // Rediriger vers la page live avec le mot de passe de modulation
+                window.location.href = `../../live.html?id=${sessionId}&moderator=true`;
+
+            } catch (err) {
+                console.error("Erreur lors du démarrage du cours:", err);
+                alert("Erreur de mise à jour. Veuillez vérifier votre connexion.");
+            }
+        }
+
+        // Système de toast personnalisé pour les notifications
+        const showToast = (message) => {
+            let container = document.getElementById('toast-container-admin');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container-admin';
+                container.style.position = 'fixed';
+                container.style.bottom = '20px';
+                container.style.right = '20px';
+                container.style.zIndex = '10000';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.style.background = '#10b981';
+            toast.style.color = '#fff';
+            toast.style.padding = '12px 24px';
+            toast.style.borderRadius = '8px';
+            toast.style.marginBottom = '8px';
+            toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            toast.style.fontWeight = 'bold';
+            toast.style.fontSize = '0.9rem';
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 4000);
+        };
+
+        // Ouvrir le salon formateur (vérifier les permissions, démarrer si besoin, et rediriger vers live.html)
+        window.ouvrirMonSalon = async (sessionId) => {
+            // 1. Vérifier permissions caméra/micro
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                stream.getTracks().forEach(t => t.stop());
+            } catch (error) {
+                alert(
+                    '⚠️ Accès caméra/micro refusé !\n\n' +
+                    '1. Cliquez sur 🔒 dans la barre d\'adresse\n' +
+                    '2. Autorisez caméra et microphone\n' +
+                    '3. Rechargez la page'
+                );
+                return;
+            }
+
+            // 2. Récupérer la session
+            const { data: session } = await supabase
+                .from('live_sessions')
+                .select('*')
+                .eq('id', sessionId)
+                .single();
+
+            if (!session) {
+                alert('Session introuvable');
+                return;
+            }
+
+            // 3. Si planifiée -> démarrer automatiquement
+            if (session.statut === 'planifie') {
+                const { error } = await supabase
+                    .from('live_sessions')
+                    .update({
+                        statut: 'en_cours',
+                        is_active: true,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', sessionId);
+                
+                if (error) {
+                    console.error("Erreur de statut automatique:", error);
+                } else {
+                    // Envoyer des notifications aux inscrits
+                    if (session.formation_id) {
+                        await notifierElevesFormation(session.formation_id, session);
+                    }
+                }
+            }
+
+            // 4. Afficher le modal du salon formateur directement
+            window.afficherModalSalon(session);
+        };
+
+        // Afficher l'interface de classe virtuelle de l'admin
+        window.afficherModalSalon = (session) => {
+            let modal = document.getElementById('modal-salon');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'modal-salon';
+                document.body.appendChild(modal);
+            }
+
+            // Lire la préférence de serveur
+            if (!window.forcedJitsiServer) {
+                window.forcedJitsiServer = localStorage.getItem('infj_forced_jitsi_server') || 'public';
+            }
+
+            modal.innerHTML = `
+                <div class="modal-salon-overlay">
+                    <div class="modal-salon-content">
+                        
+                        <!-- Header -->
+                        <div class="modal-salon-header">
+                            <div class="salon-info">
+                                <span class="salon-live-badge">
+                                    🔴 EN DIRECT
+                                </span>
+                                <h2 style="color: white; margin: 0; font-size: 1.25rem; font-weight: 800;">${session.titre}</h2>
+                                <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 0.85rem;">Vous êtes le formateur modérateur de ce salon</p>
+                            </div>
+                            <button 
+                                onclick="window.fermerSalon()"
+                                class="btn-fermer-salon">
+                                ✕
+                            </button>
+                        </div>
+
+                        <!-- Contrôles formateur -->
+                        <div class="salon-controls" style="display: flex; align-items: center; gap: 15px; padding: 12px 20px; background: #0f172a; flex-wrap: wrap; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <button onclick="window.terminerLiveModal('${session.id}')"
+                                class="btn-terminer" style="background: #ef4444; border: none; padding: 8px 16px; border-radius: 8px; color: white; font-weight: bold; font-size: 13px; cursor: pointer;">
+                                ⏹️ Terminer le cours
+                            </button>
+                            <button onclick="window.copierLienEleves('${session.id}')"
+                                class="btn-copier-lien" style="background: #2563eb; border: none; padding: 8px 16px; border-radius: 8px; color: white; font-weight: bold; font-size: 13px; cursor: pointer;">
+                                🔗 Copier le lien élèves
+                            </button>
+                            
+                            <!-- Sélecteur de serveur dynamique de Jitsi pour contourner les blocages JaaS -->
+                            <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);">
+                                <label style="color: white; font-size: 11px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase;">Passerelle Vidéo :</label>
+                                <select id="jitsiServerSelector" onchange="window.switchJitsiServer('${session.id}')" style="background: #1e293b; color: #f47c20; border: 1px solid rgba(244,124,32,0.3); border-radius: 6px; font-size: 11px; font-weight: bold; padding: 3px 8px; cursor: pointer; outline: none; transition: all 0.2s;">
+                                    <option value="public" ${window.forcedJitsiServer === 'public' ? 'selected' : ''}>🌐 Standard Public (meet.jit.si - Illimité & Gratuit)</option>
+                                    <option value="jaas" ${window.forcedJitsiServer === 'jaas' ? 'selected' : ''}>🔑 JaaS Premium (8x8.vc - Token Sécurisé)</option>
+                                </select>
+                            </div>
+
+                            <span class="participants-count" style="margin-left: auto; color: #94a3b8; font-size: 13px; font-weight: 600;">
+                                👥 <span id="nb-participants" style="color: #22c55e; font-weight: bold;">0</span> 
+                                participant(s) actif(s)
+                            </span>
+                        </div>
+
+                        <!-- Conteneur Jitsi -->
+                        <div id="jitsi-container-modal" 
+                            style="width: 100%; height: 72vh; background: #000;">
+                        </div>
+
+                    </div>
+                </div>
+            `;
+
+            modal.style.display = 'block';
+
+            // Ouvrir JaaS dans le modal
+            window.ouvrirJaaSAdmin(session, 'jitsi-container-modal');
+
+            // Mettre à jour le nombre de participants toutes les 10 secondes
+            window.participantsInterval = setInterval(async () => {
+                try {
+                    const { count, error } = await supabase
+                        .from('live_attendance')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('session_id', session.id);
+                    
+                    const el = document.getElementById('nb-participants');
+                    if (el) el.textContent = count || 0;
+                } catch (e) {
+                    console.error("Erreur de synchronisation des participations", e);
+                }
+            }, 10000);
+        };
+
+        // Gérer le changement dynamique de serveur Jitsi
+        window.switchJitsiServer = async function(sessionId) {
+            const selector = document.getElementById('jitsiServerSelector');
+            if (selector) {
+                window.forcedJitsiServer = selector.value;
+                localStorage.setItem('infj_forced_jitsi_server', selector.value);
+            }
+            
+            // Recharger le flux avec la nouvelle configuration
+            const { data: session } = await supabase
+                .from('live_sessions')
+                .select('*')
+                .eq('id', sessionId)
+                .single();
+                
+            if (session) {
+                window.ouvrirJaaSAdmin(session, 'jitsi-container-modal');
+            }
+        };
+
+        // Fermer le salon Jitsi et nettoyer les timers
+        window.fermerSalon = () => {
+            if (window.jitsiApi) {
+                window.jitsiApi.dispose();
+                window.jitsiApi = null;
+            }
+
+            if (window.participantsInterval) {
+                clearInterval(window.participantsInterval);
+            }
+
+            if (window.tokenRenewalTimer) {
+                clearTimeout(window.tokenRenewalTimer);
+            }
+
+            const modal = document.getElementById('modal-salon');
+            if (modal) modal.style.display = 'none';
+
+            loadDashboardLives();
+        };
+
+        // Copier le lien externe pour les étudiants
+        window.copierLienEleves = (sessionId) => {
+            const lien = `${window.location.origin}/live.html?id=${sessionId}`;
+            navigator.clipboard.writeText(lien).then(() => {
+                showToast('🔗 Lien copié ! Partagez-le avec vos élèves', 'success');
+            }).catch(err => {
+                console.error("Erreur de copier", err);
+                alert("Lien du cours: " + lien);
+            });
+        };
+
+        // Obtenir le token d'authentification Supabase actualisé
+        window.getAuthToken = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            return session?.access_token || '';
+        };
+
+        // Planifier le renouvellement du token pour l'admin
+        window.planifierRenouvellementAdmin = (sessionId) => {
+            const DEUX_HEURES  = 2 * 60 * 60 * 1000;
+            const QUINZE_MIN   = 15 * 60 * 1000;
+
+            window.tokenRenewalTimer = setTimeout(async () => {
+                try {
+                    const response = await fetch(
+                        `/api/jitsi/token?sessionId=${sessionId}&role=moderator`,
+                        {
+                            headers: {
+                                'Authorization': 'Bearer ' + await window.getAuthToken()
+                            }
+                        }
+                    );
+                    const { token } = await response.json();
+
+                    if(window.jitsiApi){
+                        window.jitsiApi.executeCommand('setJWT', token);
+                        console.log('Token JaaS Admin renouvelé');
+                    }
+
+                    window.planifierRenouvellementAdmin(sessionId);
+
+                } catch(error) {
+                    console.error('Erreur renouvellement token Admin:', error);
+                }
+            }, DEUX_HEURES - QUINZE_MIN);
+        };
+
+        // Ouvrir l'API JaaS Jitsi avec authentification JWT
+        window.ouvrirJaaSAdmin = async function(session, containerId) {
+            if (window.jitsiApi) {
+                window.jitsiApi.dispose();
+                window.jitsiApi = null;
+            }
+
+            if (!window.forcedJitsiServer) {
+                window.forcedJitsiServer = localStorage.getItem('infj_forced_jitsi_server') || 'public';
+            }
+
+            try {
+                let token = null;
+                let room = session.meeting_id;
+                let isFallback = true;
+
+                if (window.forcedJitsiServer === 'jaas') {
+                    const response = await fetch(
+                        `/api/jitsi/token?sessionId=${session.id}&role=moderator`,
+                        {
+                            headers: {
+                                'Authorization': 'Bearer ' + await window.getAuthToken()
+                            }
+                        }
+                    );
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        token = data.token;
+                        room = data.room;
+                        isFallback = !token || token === 'fallback';
+                    }
+                }
+
+                const container = document.getElementById(containerId);
+
+                const options = {
+                    roomName: isFallback ? room : `vpaas-magic-a0923f1ee969475aaaae4297b102f416/${room}`,
+                    jwt: isFallback ? undefined : token,
+                    width: '100%',
+                    height: '100%',
+                    parentNode: container,
+                    configOverwrite: {
+                        startWithAudioMuted: false,
+                        startWithVideoMuted: false,
+                        prejoinPageEnabled: false,
+                        disableDeepLinking: true,
+                        resolution: 720,
+                    },
+                    interfaceConfigOverwrite: {
+                        TOOLBAR_BUTTONS: [
+                            'microphone', 'camera', 'desktop',
+                            'chat', 'raisehand', 'participants-pane',
+                            'recording', 'tileview', 'hangup'
+                        ],
+                        SHOW_JITSI_WATERMARK: false,
+                        SHOW_BRAND_WATERMARK: false,
+                        HIDE_INVITE_MORE_HEADER: true,
+                    },
+                    userInfo: {
+                        displayName: "Formateur INFJ (Admin)",
+                        role: "moderator"
+                    }
+                };
+
+                window.jitsiApi = new JitsiMeetExternalAPI(isFallback ? 'meet.jit.si' : '8x8.vc', options);
+
+                // Planifier renouvellement si ce n'est pas un repli libre
+                if (!isFallback && window.forcedJitsiServer === 'jaas') {
+                    window.planifierRenouvellementAdmin(session.id);
+                }
+            } catch (err) {
+                console.error("Erreur lors de l'initialisation de JaaS Admin API", err);
+            }
+        };
+
+        // Terminer le live depuis le modal
+        window.terminerLiveModal = async function(sessionId) {
+            await window.terminerLive(sessionId);
+            window.fermerSalon();
+        };
+
+        // Rejoindre un live actif en tant qu'admin
+        window.rejoindreAdmin = function(sessionId, meetingId) {
+            window.location.href = `../../live.html?id=${sessionId}&moderator=true`;
+        }
+
+        // Terminer un live
+        window.terminerLive = async function(sessionId) {
+            if (!confirm("Voulez-vous clôturer définitivement ce cours en direct ? L'émergement de présence sera arrêté.")) return;
+
+            try {
+                const { error } = await supabase
+                    .from('live_sessions')
+                    .update({
+                        statut: 'termine',
+                        is_active: false,
+                        date_fin: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', sessionId);
+
+                if (error) throw error;
+
+                alert("Le cours en direct est clôturé.");
+                await loadDashboardLives();
+
+            } catch (err) {
+                console.error("Erreur lors de la clôture:", err);
+                alert("Erreur de clôture.");
+            }
+        }
+
+        // Annuler/Supprimer un live planifié
+        window.annulerLive = async function(sessionId) {
+            if (!confirm("Voulez-vous annuler et supprimer définitivement ce cours en direct ?")) return;
+
+            try {
+                const { error } = await supabase
+                    .from('live_sessions')
+                    .delete()
+                    .eq('id', sessionId);
+
+                if (error) throw error;
+
+                alert("Cours en direct annulé.");
+                await loadDashboardLives();
+
+            } catch (err) {
+                console.error("Erreur lors de l'annulation:", err);
+                alert("Impossible de supprimer le cours.");
+            }
+        }
+
+        // Voir présences d'un cours
+        window.voirPresences = async function(sessionId, title) {
+            selectedSessionId = sessionId;
+            selectedSessionTitle = title;
+            document.getElementById('emargementPanelTitle').textContent = `👥 Émargements : ${title}`;
+
+            // Surligner la carte sélectionnée
+            const cards = document.querySelectorAll('.session-card');
+            cards.forEach(c => c.classList.remove('selected-session-card'));
+            const card = document.getElementById(`session-card-${sessionId}`);
+            if (card) card.classList.add('selected-session-card');
+
+            await refreshSelectedAttendance();
+        }
+
+        // Rafraichir les présences pour le cours choisi
+        window.refreshSelectedAttendance = async function() {
+            const bodyEl = document.getElementById('attendance-list-body');
+            if (!bodyEl) return;
+
+            if (!selectedSessionId) {
+                bodyEl.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #64748b; padding: 30px;">Sélectionnez une session pour afficher les présences.</td></tr>`;
+                return;
+            }
+
+            try {
+                const { data: attends, error } = await supabase
+                    .from('live_attendance')
+                    .select('*')
+                    .eq('session_id', selectedSessionId)
+                    .order('joined_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!attends || attends.length === 0) {
+                    bodyEl.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #64748b; padding: 30px;">Aucun étudiant n'a encore émargé ou rejoint cette classe virtuelle.</td></tr>`;
+                    return;
+                }
+
+                bodyEl.innerHTML = attends.map(att => {
+                    const joined = new Date(att.joined_at).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    const isOnline = (new Date() - new Date(att.last_seen_at)) < 45000;
+                    const presenceDurationStr = att.duree_presence ? `${att.duree_presence} min` : 'En cours';
+
+                    return `
+                        <tr>
+                            <td>
+                                <strong style="color: #003366; display: block; font-size: 0.9rem;">${att.nom_complet || 'Étudiant'}</strong>
+                                <span style="font-size: 0.75rem; color: #64748b;">${att.email}</span>
+                            </td>
+                            <td>
+                                <div style="font-size: 0.78rem;"><strong>Arrivée :</strong> ${joined}</div>
+                                <div style="font-size: 0.75rem; color: #64748b;"><strong>Durée :</strong> ${presenceDurationStr}</div>
+                            </td>
+                            <td>
+                                <span class="${isOnline ? 'presence-active-badge' : 'presence-inactive-badge'}">
+                                    ${isOnline ? '● Présent' : '● Parti'}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("Erreur de récupération des présences:", err);
+                bodyEl.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #ef4444; padding: 20px;">Erreur de chargement.</td></tr>`;
+            }
+        }
+
+        // Exporter émargement au format CSV
+        window.exportCurrentAttendance = async function() {
+            if (!selectedSessionId) {
+                alert("Veuillez d'abord sélectionner un cours pour l'exporter.");
+                return;
+            }
+
+            try {
+                const { data: attends, error } = await supabase
+                    .from('live_attendance')
+                    .select('*')
+                    .eq('session_id', selectedSessionId)
+                    .order('joined_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!attends || attends.length === 0) {
+                    alert("Aucun étudiant n'est enregistré pour cette session. Export impossible.");
+                    return;
+                }
+
+                let csvContent = "\uFEFF"; // BOM UTF-8
+                csvContent += "Nom de l'étudiant;Adresse Email;Heure d'arrivée;Duree présence (Minutes);Dernière activité;Statut\n";
+
+                attends.forEach(att => {
+                    const joined = new Date(att.joined_at).toLocaleString('fr-FR');
+                    const lastSeen = new Date(att.last_seen_at).toLocaleString('fr-FR');
+                    const isOnline = (new Date() - new Date(att.last_seen_at)) < 45000 ? "Présent" : "Absent/Parti";
+                    const duration = att.duree_presence || 0;
+                    csvContent += `"${att.nom_complet || ''}";"${att.email}";"${joined}";"${duration}";"${lastSeen}";"${isOnline}"\n`;
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                link.setAttribute("download", `Emargement-INFJ-${selectedSessionTitle.replace(/[^a-z0-9]/gi, '_')}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+            } catch (err) {
+                alert("Erreur lors de l'exportation CSV.");
+            }
+        }
+
+        // Notification d'élèves par messages internes de l'école
+        async function notifierElevesFormation(formationId, session) {
+            try {
+                // Récupérer les étudiants dont l'inscription est acceptée pour cette formation
+                const { data: inscrits } = await supabase
+                    .from('inscriptions')
+                    .select('user_id, email, nom, prenom')
+                    .eq('formation_id', formationId)
+                    .eq('status', 'acceptee');
+
+                if (!inscrits || inscrits.length === 0) return;
+
+                // notifications collectives
+                // Envoi de messages directement en base (dans platform_messages) pour chaque élève
+                for (const inscrit of inscrits) {
+                    if (!inscrit.user_id) continue;
+                    
+                    await supabase
+                        .from('platform_messages')
+                        .insert({
+                            titre: `📡 Live programmé activé : ${session.titre}`,
+                            message: `Votre cours en direct vient d'être activé par l'enseignant de l'INFJ. Cliquez ici pour rejoindre la classe virtuelle de l'Institut en temps réel.`,
+                            user_id: inscrit.user_id,
+                            lien: `/live.html?id=${session.id}`,
+                            is_active: true,
+                            created_at: new Date().toISOString()
+                        });
+                }
+            } catch (err) {
+                console.warn("Notification des élèves sautée (table non-existante ou erreur):", err);
+            }
+        }
+    </script>
+</body>
+</html>
