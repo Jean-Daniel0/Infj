@@ -482,6 +482,7 @@ function playVideo(index) {
     if (customDescription) {
         const descriptionText = video.description || video.details || 'Aucune description disponible pour cette partie du cours.'
         customDescription.textContent = descriptionText
+        customDescription.scrollTop = 0 // Réinitialise la position de défilement interne (sinon elle hérite du scroll du module précédent)
     }
 
     // Créer le lecteur vidéo HTML5 avec le logo WEEL TECH et contrôles personnalisés
@@ -938,13 +939,17 @@ async function claimCertificate() {
         // 2. Vérifier s'il y a déjà un certificat émis pour l'une des inscriptions de cette formation
         spinner.querySelector('span').textContent = "Vérification des certificats existants...";
         
-        const formationId = inscription.formation_id || inscription.course_id;
-        if (formationId) {
-            const { data: userInscriptions, error: uiErr } = await supabase
+        const formationId = inscription.formation_id;
+        const coursVideoId = inscription.cours_video_id;
+        if (formationId || coursVideoId) {
+            let dupQuery = supabase
                 .from('inscriptions')
                 .select('id')
-                .eq('user_id', user.id)
-                .eq('formation_id', formationId);
+                .eq('user_id', user.id);
+            dupQuery = formationId
+                ? dupQuery.eq('formation_id', formationId)
+                : dupQuery.eq('cours_video_id', coursVideoId);
+            const { data: userInscriptions, error: uiErr } = await dupQuery;
                 
             if (!uiErr && userInscriptions && userInscriptions.length > 0) {
                 const insIds = userInscriptions.map(ui => ui.id);

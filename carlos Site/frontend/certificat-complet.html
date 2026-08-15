@@ -489,14 +489,31 @@
     if (insErr) throw new Error("Impossible de récupérer l'inscription : " + insErr.message);
     if (!inscription) throw new Error("Inscription introuvable.");
 
-    // Récupérer la formation associée
-    const { data: formation, error: formErr } = await client
-      .from('formations')
-      .select('*')
-      .eq('id', inscription.formation_id || inscription.course_id)
-      .single();
+    // Récupérer la formation OU le cours vidéo associé (une inscription est liée à l'un ou l'autre, jamais les deux)
+    let formation = null;
+    let isVideoCourse = false;
+    if (inscription.formation_id) {
+      const { data, error: formErr } = await client
+        .from('formations')
+        .select('*')
+        .eq('id', inscription.formation_id)
+        .single();
+      if (formErr) throw new Error("Impossible de récupérer la formation : " + formErr.message);
+      formation = data;
+    } else if (inscription.cours_video_id) {
+      const { data, error: videoErr } = await client
+        .from('cours_videos')
+        .select('*')
+        .eq('id', inscription.cours_video_id)
+        .single();
+      if (videoErr) throw new Error("Impossible de récupérer le cours vidéo : " + videoErr.message);
+      // Un cours_videos n'a pas de champ 'duree' ni 'modules' contrairement à une formation classique
+      formation = { ...data, duree: data.duree || '2 heures', modules: {} };
+      isVideoCourse = true;
+    } else {
+      throw new Error("Cette inscription n'est liée à aucune formation ni cours vidéo.");
+    }
 
-    if (formErr) throw new Error("Impossible de récupérer la formation : " + formErr.message);
     if (!formation) throw new Error("Formation introuvable.");
 
     const todayStr = new Date().toISOString();
@@ -511,7 +528,8 @@
 
     return {
       inscriptionId: inscription.id,
-      formationId: formation.id,
+      formationId: isVideoCourse ? null : formation.id,
+      coursVideoId: isVideoCourse ? formation.id : null,
       nom: studentFullName.toUpperCase(),
       cours: formation.titre,
       duree: formation.duree || '30 heures',
@@ -636,7 +654,7 @@
   /**
    * 5. Sauvegarde l'enregistrement dans la table "certificats" et met à jour "inscriptions"
    */
-  window.sauvegarderCertificat = async function(inscriptionId, formationId, numeroCertificat, pdfUrl) {
+  window.sauvegarderCertificat = async function(inscriptionId, formationId, coursVideoId, numeroCertificat, pdfUrl) {
     console.log("[Certificat Complet] sauvegarderCertificat en BDD...");
     
     const client = getSupabase();
@@ -648,7 +666,8 @@
       .from('certificats')
       .insert([{
         inscription_id: inscriptionId,
-        formation_id: formationId,
+        formation_id: formationId || null,
+        cours_video_id: coursVideoId || null,
         numero_certificat: numeroCertificat,
         pdf_url: pdfUrl,
         date_emission: nowStr,
@@ -692,16 +711,21 @@
         throw new Error("Inscription introuvable.");
       }
 
-      const formationId = inscription.formation_id || inscription.course_id;
+      const formationId = inscription.formation_id;
+      const coursVideoId = inscription.cours_video_id;
       const userId = inscription.user_id;
 
-      if (formationId && userId) {
-        // En récupérer toutes les inscriptions de cet utilisateur pour cette formation
-        const { data: userInscriptions, error: userInsErr } = await client
+      if ((formationId || coursVideoId) && userId) {
+        // Récupérer toutes les inscriptions de cet utilisateur pour cette même formation/cours vidéo
+        let dupQuery = client
           .from('inscriptions')
           .select('id')
-          .eq('user_id', userId)
-          .eq('formation_id', formationId);
+          .eq('user_id', userId);
+        dupQuery = formationId
+          ? dupQuery.eq('formation_id', formationId)
+          : dupQuery.eq('cours_video_id', coursVideoId);
+
+        const { data: userInscriptions, error: userInsErr } = await dupQuery;
 
         if (!userInsErr && userInscriptions && userInscriptions.length > 0) {
           const insIds = userInscriptions.map(ui => ui.id);
@@ -731,7 +755,7 @@
       window.remplirCertificat(data);
       const blob = await window.genererPDF(data.certId);
       const pdfUrl = await window.uploadPDF(blob, data.certId, inscriptionId);
-      await window.sauvegarderCertificat(inscriptionId, data.formationId, data.certId, pdfUrl);
+      await window.sauvegarderCertificat(inscriptionId, data.formationId, data.coursVideoId, data.certId, pdfUrl);
       
       console.log("[Certificat Complet] Terminé avec succès. URL générée :", pdfUrl);
       return { pdfUrl: pdfUrl, certId: data.certId, data: data };
