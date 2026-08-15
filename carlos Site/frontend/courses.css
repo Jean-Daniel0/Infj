@@ -73,9 +73,21 @@ body:not(.has-sidebar) .courses-main {
 /* Grille des cours */
 .courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 25px;
     margin-top: 25px;
+}
+
+@media (max-width: 900px) {
+    .courses-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .courses-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Cartes de cours */
@@ -282,21 +294,39 @@ body:not(.has-sidebar) .courses-main {
 /* Grille des certificats */
 .certificates-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     margin-top: 25px;
+}
+
+@media (max-width: 900px) {
+    .certificates-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .certificates-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
 }
 
 .certificate-card {
     background: #fff;
     border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 20px;
+    text-align: center;
+    gap: 10px;
     transition: all 0.3s ease;
-    border-left: 5px solid #28a745;
+    border: 1px solid #cbd5e1;
+    border-top: 4px solid #28a745;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 .certificate-card:hover {
@@ -305,36 +335,71 @@ body:not(.has-sidebar) .courses-main {
 }
 
 .certificate-icon {
-    font-size: 2.5em;
-    flex-shrink: 0;
+    font-size: 2.2em;
+    background: #f0fff4;
+    color: #28a745;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(40, 167, 69, 0.12);
 }
 
 .certificate-info {
-    flex: 1;
+    width: 100%;
 }
 
 .certificate-info h3 {
     color: #003366;
-    font-size: 1.2em;
+    font-size: 1.02em;
     margin: 0 0 8px 0;
     font-weight: 700;
+    line-height: 1.3;
+    font-family: 'Outfit', sans-serif;
 }
 
-.certificate-info p {
-    color: #666;
-    margin: 4px 0;
-    font-size: 0.9em;
+.certificate-recipient,
+.certificate-date {
+    color: #64748b;
+    margin: 3px 0;
+    font-size: 0.82em;
+}
+
+.certificate-recipient strong {
+    color: #334155;
 }
 
 .certificate-number {
+    display: inline-block;
     color: #f47c20;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 0.78em;
+    background: #fff7f0;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1.5px solid rgba(244, 124, 32, 0.15);
+    margin-top: 6px;
 }
 
 .certificate-actions {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 6px;
+}
+
+.certificate-actions .btn-primary,
+.certificate-actions .btn-secondary {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 0.82em;
+    padding: 10px 14px;
+    cursor: pointer;
 }
 
 /* Grille des statistiques */
@@ -409,22 +474,8 @@ body:not(.has-sidebar) .courses-main {
         font-size: 1.8em;
     }
     
-    .courses-grid {
-        grid-template-columns: 1fr;
-    }
-    
     .course-actions {
         flex-direction: column;
-    }
-    
-    .certificate-card {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .certificate-actions {
-        flex-direction: row;
-        justify-content: center;
     }
     
     .stats-grid {
@@ -447,10 +498,6 @@ body:not(.has-sidebar) .courses-main {
     .certificates-section h2,
     .stats-section h2 {
         font-size: 1.4em;
-    }
-    .courses-grid {
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 18px;
     }
     .course-card {
         padding: 18px;
@@ -746,23 +793,6 @@ body:not(.has-sidebar) .courses-main {
     transform: translateY(-2px);
     box-shadow: 0 12px 30px rgba(40, 167, 69, 0.08) !important;
     border-color: #a7f3d0 !important;
-}
-
-@media (max-width: 600px) {
-    .certificate-card {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 16px !important;
-    }
-    .certificate-actions {
-        flex-direction: row !important;
-        justify-content: flex-start !important;
-    }
-    .certificate-actions a,
-    .certificate-actions button {
-        flex: 1 !important;
-        text-align: center !important;
-    }
 }
 
 

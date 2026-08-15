@@ -1306,17 +1306,17 @@ async function loadUserCertificates() {
             }
 
             return `
-                <div class="certificate-card" id="cert-card-${item.id}" style="display: flex; align-items: center; gap: 20px; padding: 24px; border-radius: 16px; background: #ffffff; border: 1px solid #cbd5e1; border-top: 4px solid #28a745; box-shadow: 0 10px 25px rgba(0,0,0,0.03); transition: all 0.3s; width: 100%; box-sizing: border-box;">
-                    <div class="certificate-icon" style="font-size: 2.8rem; background: #f0fff4; color: #28a745; width: 68px; height: 68px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.12);">🏆</div>
-                    <div class="certificate-info" style="flex-grow: 1;">
-                        <h3 style="color: #003366; font-size: 1.12rem; margin: 0 0 6px 0; font-weight: 800; line-height: 1.3; font-family: 'Outfit', sans-serif;">Certificat d'Aptitude: ${courseTitle}</h3>
-                        <p style="color: #475569; font-size: 0.82rem; margin: 0 0 4px 0; font-weight: 500;">Délivré d'après l'inscription de <strong>${studentPrenom} ${studentNom}</strong></p>
-                        <p style="color: #64748b; font-size: 0.78rem; margin: 0 0 6px 0;">Date d'émission : ${emissionDate}</p>
-                        <p class="certificate-number" style="font-family: inherit; font-size: 0.75rem; font-weight: 700; color: #f47c20; background: #fff7f0; padding: 3px 8px; border-radius: 4px; display: inline-block; border: 1.5px solid rgba(244, 124, 32, 0.15);">N° ${certNum}</p>
+                <div class="certificate-card" id="cert-card-${item.id}">
+                    <div class="certificate-icon">🏆</div>
+                    <div class="certificate-info">
+                        <h3>Certificat d'Aptitude: ${courseTitle}</h3>
+                        <p class="certificate-recipient">Délivré d'après l'inscription de <strong>${studentPrenom} ${studentNom}</strong></p>
+                        <p class="certificate-date">Date d'émission : ${emissionDate}</p>
+                        <p class="certificate-number">N° ${certNum}</p>
                     </div>
-                    <div class="certificate-actions" style="display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;">
-                        <button onclick="previewCertificatePopup('${item.id}', \`${courseTitle.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, \`${(studentPrenom + ' ' + studentNom).replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, '${certNum}', '${emissionDate}', '${item.formations?.duree || '30 heures'}')" class="btn-secondary" style="font-size: 0.8rem; font-weight: bold; padding: 10px 18px; border-radius: 8px; font-family: inherit; line-height: 1.2; border: 1px solid #cbd5e1; background: #fff; color: #1e293b; cursor: pointer; transition: all 0.2s;">👁️ Aperçu</button>
-                        <a href="${fileUrl}" target="_blank" class="btn-primary" style="display: block; text-decoration: none; text-align: center; font-size: 0.8rem; font-weight: bold; padding: 10px 18px; border-radius: 8px; font-family: inherit; line-height: 1.2;">Voir / Télécharger</a>
+                    <div class="certificate-actions">
+                        <button onclick="previewCertificatePopup('${item.id}', \`${courseTitle.replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, \`${(studentPrenom + ' ' + studentNom).replace(/`/g, '\\`').replace(/'/g, "\\'")}\`, '${certNum}', '${emissionDate}', '${item.formations?.duree || '30 heures'}')" class="btn-secondary">👁️ Aperçu</button>
+                        <a href="${fileUrl}" target="_blank" class="btn-primary">Voir / Télécharger</a>
                     </div>
                 </div>
             `;
