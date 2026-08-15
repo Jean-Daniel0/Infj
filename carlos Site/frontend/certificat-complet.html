@@ -349,7 +349,6 @@
         <img id="img-logo-infj" src="/images/logo.png" alt="Logo INFJ" onerror="if (window.handleLogoError) { window.handleLogoError(this, 'infj'); } else { this.onerror=null; this.src='https://nnppbnqavajmublpfhkj.supabase.co/storage/v1/object/public/videos/logo.png'; }" style="height: 52px; object-fit: contain;" />
       </div>
       <div class="cert-logo-text" style="font-size: 19px; margin-top: 8px;">Institut National de Formation des Jeunes</div>
-      <div class="cert-tagline" style="letter-spacing: 2px;">RÉPUBLIQUE D'HAÏTI</div>
     </div>
 
     <div class="cert-divider"></div>
@@ -381,7 +380,7 @@
       </div>
     </div>
 
-    <!-- Signatures -->
+    <!-- Signatures + QR code de vérification -->
     <div class="cert-sigs">
       <div class="cert-sig-block">
         <div id="sig1-img-container" style="height: 48px; width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 4px;">
@@ -390,6 +389,9 @@
         <div class="cert-sig-line"></div>
         <div class="cert-sig-name" id="sig1-name">Me Robertho Carlos Deronceray</div>
         <div class="cert-sig-role" id="sig1-role">Directeur fondateur</div>
+      </div>
+      <div class="cert-sig-block" id="cert-qr-container" style="align-self: center; text-align: center;">
+        <!-- Rempli dynamiquement : image QR + légende -->
       </div>
       <div class="cert-sig-block">
         <div id="sig2-img-container" style="height: 48px; width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 4px;">
@@ -403,7 +405,7 @@
 
     <!-- Footer -->
     <div class="cert-footer">
-      <span>Institut National de Formation des Jeunes — République d'Haïti</span>
+      <span>Institut National de Formation des Jeunes</span>
       <span id="cert-footer-id">N° {{CERT_ID}}</span>
       <span id="cert-footer-date">Fait à Port-au-Prince le, {{DATE}}</span>
     </div>
@@ -471,6 +473,49 @@
   }
 
   /**
+   * Convertit une durée brute (ex: "48", "48h", "8 semaines", "1 mois") en texte lisible,
+   * en choisissant automatiquement la plus grande unité pertinente :
+   * < 24h -> heures | >= 24h -> jours | >= 30j -> mois | >= 365j -> années.
+   * Si le format d'origine n'est pas reconnaissable, il est renvoyé tel quel (aucune casse).
+   */
+  window.formatDuree = function(dureeRaw) {
+    if (!dureeRaw) return '30 heures';
+    const str = String(dureeRaw).trim().toLowerCase().replace(',', '.');
+
+    const match = str.match(/^([\d.]+)\s*([a-zéû]*)/);
+    if (!match) return dureeRaw; // format non reconnu -> on ne devine pas, on affiche tel quel
+
+    const value = parseFloat(match[1]);
+    if (isNaN(value)) return dureeRaw;
+    const unit = match[2] || '';
+
+    // Normaliser vers un total d'heures
+    let totalHeures;
+    if (unit.startsWith('an')) totalHeures = value * 365 * 24;
+    else if (unit.startsWith('mois')) totalHeures = value * 30 * 24;
+    else if (unit.startsWith('sem')) totalHeures = value * 7 * 24;
+    else if (unit.startsWith('j')) totalHeures = value * 24;
+    else totalHeures = value; // 'h', 'heure(s)', ou aucune unité -> on suppose des heures
+
+    const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
+
+    if (totalHeures < 24) {
+      const h = Math.round(totalHeures * 10) / 10;
+      return pluriel(h, 'heure');
+    }
+    const totalJours = totalHeures / 24;
+    if (totalJours < 30) {
+      return pluriel(Math.round(totalJours), 'jour');
+    }
+    const totalMois = totalJours / 30;
+    if (totalMois < 12) {
+      return pluriel(Math.round(totalMois), 'mois').replace('moiss', 'mois'); // 'mois' est invariable
+    }
+    const totalAnnees = totalJours / 365;
+    return pluriel(Math.round(totalAnnees * 10) / 10, 'année');
+  };
+
+  /**
    * 1. Récupère les données d'inscription et de formation depuis Supabase
    */
   window.genererCertificat = async function(inscriptionId) {
@@ -508,7 +553,7 @@
         .single();
       if (videoErr) throw new Error("Impossible de récupérer le cours vidéo : " + videoErr.message);
       // Un cours_videos n'a pas de champ 'duree' ni 'modules' contrairement à une formation classique
-      formation = { ...data, duree: data.duree || '2 heures', modules: {} };
+      formation = { ...data, duree: data.duree || '2', modules: {} };
       isVideoCourse = true;
     } else {
       throw new Error("Cette inscription n'est liée à aucune formation ni cours vidéo.");
@@ -526,20 +571,27 @@
     const dynamicFormateurNom = formation.formateur_nom || metaModules.formateur_nom || 'Jean-Daniel Michel';
     const dynamicFormateurRole = formation.formateur_role || metaModules.formateur_role || "Formateur d'Aptitude";
 
+    // URL publique du PDF, calculable à l'avance (le chemin est déterministe) — permet de générer
+    // le QR code de vérification AVANT même que le fichier soit réellement uploadé.
+    const predictedFilePath = `${inscription.id}/${uniqueNumber}.pdf`;
+    const { data: predictedUrlData } = client.storage.from('certificats').getPublicUrl(predictedFilePath);
+    const verificationUrl = predictedUrlData?.publicUrl || '';
+
     return {
       inscriptionId: inscription.id,
       formationId: isVideoCourse ? null : formation.id,
       coursVideoId: isVideoCourse ? formation.id : null,
       nom: studentFullName.toUpperCase(),
       cours: formation.titre,
-      duree: formation.duree || '30 heures',
+      duree: window.formatDuree(formation.duree),
       dateCompletion: todayStr,
       certId: uniqueNumber,
       sig2_nom: dynamicFormateurNom,
       sig2_role: dynamicFormateurRole,
       email: inscription.email,
       formateur_signature: metaModules.formateur_signature || '',
-      director_signature: metaModules.director_signature || ''
+      director_signature: metaModules.director_signature || '',
+      verificationUrl: verificationUrl
     };
   };
 
@@ -567,10 +619,12 @@
     document.getElementById('cert-footer-date').textContent = `Fait à Port-au-Prince le, ${formattedDate}`;
 
     // Insertion des images des signatures
+    // onerror : si l'image scannée est cassée/invalide, on retombe proprement sur le texte plutôt
+    // que d'afficher une icône d'image cassée sur un document officiel.
     const sig1Container = document.getElementById('sig1-img-container');
     if (sig1Container) {
       if (data.director_signature) {
-        sig1Container.innerHTML = `<img src="${data.director_signature}" alt="Signature Directeur" style="height: 48px; max-width: 100%; object-fit: contain; transform: scale(1.15);" />`;
+        sig1Container.innerHTML = `<img src="${data.director_signature}" alt="Signature Directeur" style="height: 48px; max-width: 100%; object-fit: contain; transform: scale(1.15);" onerror="this.closest('#sig1-img-container').innerHTML='<div class=&quot;cert-signature-fallback&quot;>Me Robertho Carlos D.</div>';" />`;
       } else {
         sig1Container.innerHTML = `<div class="cert-signature-fallback">Me Robertho Carlos D.</div>`;
       }
@@ -578,12 +632,22 @@
 
     const sig2Container = document.getElementById('sig2-img-container');
     if (sig2Container) {
+      const trainerName = data.sig2_nom || "Formateur INFJ";
       if (data.formateur_signature) {
-        sig2Container.innerHTML = `<img src="${data.formateur_signature}" alt="Signature Formateur" style="height: 48px; max-width: 100%; object-fit: contain; transform: scale(1.15);" />`;
+        sig2Container.innerHTML = `<img src="${data.formateur_signature}" alt="Signature Formateur" style="height: 48px; max-width: 100%; object-fit: contain; transform: scale(1.15);" onerror="this.closest('#sig2-img-container').innerHTML='<div class=&quot;cert-signature-fallback&quot;>${trainerName}</div>';" />`;
       } else {
-        const trainerName = data.sig2_nom || "Formateur INFJ";
         sig2Container.innerHTML = `<div class="cert-signature-fallback">${trainerName}</div>`;
       }
+    }
+
+    // QR code de vérification d'authenticité (pointe vers le PDF public du certificat)
+    const qrContainer = document.getElementById('cert-qr-container');
+    if (qrContainer && data.verificationUrl) {
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&margin=0&data=${encodeURIComponent(data.verificationUrl)}`;
+      qrContainer.innerHTML = `
+        <img src="${qrApiUrl}" alt="QR code de vérification" style="width: 56px; height: 56px; display: block; margin: 0 auto 4px auto;" onerror="this.parentElement.style.display='none';" />
+        <div style="font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Scanner pour vérifier</div>
+      `;
     }
   };
 
