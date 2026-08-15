@@ -756,6 +756,36 @@
       const blob = await window.genererPDF(data.certId);
       const pdfUrl = await window.uploadPDF(blob, data.certId, inscriptionId);
       await window.sauvegarderCertificat(inscriptionId, data.formationId, data.coursVideoId, data.certId, pdfUrl);
+
+      // Envoi du certificat par e-mail à l'étudiant (ne bloque pas la réclamation si ça échoue)
+      if (data.email) {
+        try {
+          const { data: sessionData } = await client.auth.getSession();
+          const accessToken = sessionData?.session?.access_token;
+          const emailResp = await fetch('/api/send-certificate-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+            },
+            body: JSON.stringify({
+              email: data.email,
+              studentName: data.nom,
+              courseTitle: data.cours,
+              pdfUrl: pdfUrl
+            })
+          });
+          if (!emailResp.ok) {
+            console.warn("[Certificat Complet] L'envoi de l'e-mail a échoué (le certificat reste disponible en ligne) :", await emailResp.text());
+          } else {
+            console.log("[Certificat Complet] E-mail de certificat envoyé à", data.email);
+          }
+        } catch (emailErr) {
+          console.warn("[Certificat Complet] Erreur réseau lors de l'envoi de l'e-mail (le certificat reste disponible en ligne) :", emailErr);
+        }
+      } else {
+        console.warn("[Certificat Complet] Aucun e-mail associé à cette inscription, envoi ignoré.");
+      }
       
       console.log("[Certificat Complet] Terminé avec succès. URL générée :", pdfUrl);
       return { pdfUrl: pdfUrl, certId: data.certId, data: data };

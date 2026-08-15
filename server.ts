@@ -1195,6 +1195,11 @@ function getResendClient() {
 }
 
 app.post('/api/send-certificate-email', async (req: any, res: any) => {
+  const { user: authUser, error: authError } = await verifyAuthUser(req);
+  if (!authUser) {
+    return res.status(401).json({ error: authError || 'Non authentifié' });
+  }
+
   const { studentName, courseTitle, pdfUrl, email } = req.body;
 
   if (!email || !studentName || !courseTitle || !pdfUrl) {
