@@ -1293,6 +1293,22 @@ async function startServer() {
     ? path.join(process.cwd(), 'dist/images')
     : path.resolve(process.cwd(), 'carlos Site/frontend/images');
 
+  // ROUTE DE DIAGNOSTIC TEMPORAIRE - à retirer une fois le problème d'images résolu.
+  app.get('/api/debug/images', (req, res) => {
+    const distPath = path.join(process.cwd(), 'dist');
+    const info: any = { NODE_ENV: process.env.NODE_ENV, cwd: process.cwd(), isProd, imagesPath, fallbackImagesPath, distPath };
+    try { info.cwd_contents = fs.readdirSync(process.cwd()); } catch (e: any) { info.cwd_contents_error = e.message; }
+    try {
+      info.dist_exists = fs.existsSync(distPath);
+      if (info.dist_exists) info.dist_contents = fs.readdirSync(distPath);
+    } catch (e: any) { info.dist_error = e.message; }
+    try {
+      info.images_dir_exists = fs.existsSync(imagesPath);
+      if (info.images_dir_exists) info.images_dir_contents = fs.readdirSync(imagesPath);
+    } catch (e: any) { info.images_dir_error = e.message; }
+    res.json(info);
+  });
+
   // Register image routes before Vite middleware to ensure they take precedence and serve reliably
   // Cache-Control explicite : sans ça, certains navigateurs (mobile surtout) mettent en cache de façon
   // "heuristique" et peuvent garder une ancienne image cassée en mémoire très longtemps sans jamais revérifier.
