@@ -8,17 +8,25 @@ let currentUser = null
 let userCourses = []
 let availableCourses = []
 
-// Fonction de résolution d'images locales physiques (évite l'I.A. et les liens brisés)
+// Résout l'image de couverture d'une formation : priorité à l'image réellement uploadée par
+// l'admin (URL Supabase Storage ou toute URL http/https valide) ; ne devine une photo générique
+// locale que si aucune vraie image n'a été fournie (image_url vide/null).
 function resolveCourseImageWithLocalFallbacks(rawImageUrl, title) {
     const raw = (rawImageUrl || '').trim();
-    const txt = (raw + ' ' + (title || '')).toLowerCase();
 
-    // Si c'est déjà un chemin d'image local correct
+    // Une vraie image a été uploadée (Supabase Storage ou toute URL externe) -> on l'utilise telle quelle
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+        return raw;
+    }
+
+    // Chemin local déjà correct
     if (raw.startsWith('/images/') || raw.startsWith('images/')) {
         return raw.startsWith('/') ? raw : '/' + raw;
     }
 
-    // Association stricte d'après le titre ou l'URL par rapport aux images physiques réelles présentes
+    // Aucune image fournie : on devine une photo générique parmi les images physiques disponibles,
+    // d'après des mots-clés dans le titre.
+    const txt = (raw + ' ' + (title || '')).toLowerCase();
     if (txt.includes('leadership') || txt.includes('pullman') || txt.includes('toulouse')) {
         return '/images/pullman_toulouse.jpeg';
     } else if (txt.includes('entrepreneuriat') || txt.includes('business')) {
@@ -261,7 +269,7 @@ function displayUserCourses() {
                 <div class="course-card-list active">
                     <div class="course-list-main-info">
                         <div class="course-list-thumb">
-                            <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer">
+                            <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer" onerror="this.onerror=null;this.src='/images/pullman_toulouse.jpeg';">
                         </div>
                         <div class="course-list-details" data-progress-text="${prog}%">
                             <span class="course-status" style="background: ${statusBg}; color: ${statusColor}; font-size: 0.72rem; font-weight: 700; padding: 2px 10px; border-radius: 12px; text-transform: uppercase; display: inline-block; width: fit-content; text-align: center; margin-bottom: 4px;">${statusLabel}</span>
@@ -322,7 +330,7 @@ function displayUserCourses() {
                     <div class="course-card-list active" style="border-left-color: #28a745;">
                         <div class="course-list-main-info">
                             <div class="course-list-thumb">
-                                <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer">
+                                <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer" onerror="this.onerror=null;this.src='/images/pullman_toulouse.jpeg';">
                             </div>
                             <div class="course-list-details" data-progress-text="Terminé">
                                 <span class="course-status" style="background: #dcfce7; color: #166534; font-size: 0.72rem; font-weight: 700; padding: 2px 10px; border-radius: 12px; text-transform: uppercase; display: inline-block; width: fit-content; text-align: center; margin-bottom: 4px;">Terminée ✓</span>
@@ -431,7 +439,7 @@ function displayAvailableCourses() {
             <div class="course-card-list active">
                 <div class="course-list-main-info">
                     <div class="course-list-thumb">
-                        <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer">
+                        <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer" onerror="this.onerror=null;this.src='/images/pullman_toulouse.jpeg';">
                     </div>
                     <div class="course-list-details">
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px; flex-wrap: wrap;">
