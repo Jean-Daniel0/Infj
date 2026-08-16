@@ -1240,9 +1240,37 @@ section h2::before {
 /* Premium courses grid and cards setup */
 .premium-courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     margin-bottom: 30px;
+}
+
+/* Grilles de la page formation.html : infos pratiques + objectifs */
+.formation-info-grid,
+.formation-objectifs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.formation-objectifs-grid {
+    gap: 20px;
+    margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+    .formation-info-grid,
+    .formation-objectifs-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .formation-info-grid,
+    .formation-objectifs-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .premium-course-card {
@@ -1387,6 +1415,12 @@ section h2::before {
         padding-left: 8px;
         border-left-width: 3px;
     }
+
+    /* Premium courses grid: une seule colonne sur mobile étroit */
+    .premium-courses-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
     
     /* Hero section text scaling */
     .hero {
@@ -1521,9 +1555,9 @@ section h2::before {
         font-size: 11px;
     }
     
-    /* Premium courses grid scale on mobile */
+    /* Premium courses grid scale on tablet */
     .premium-courses-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 12px;
     }
     
