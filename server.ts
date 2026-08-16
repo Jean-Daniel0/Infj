@@ -1294,8 +1294,15 @@ async function startServer() {
     : path.resolve(process.cwd(), 'carlos Site/frontend/images');
 
   // Register image routes before Vite middleware to ensure they take precedence and serve reliably
-  app.use('/images', express.static(imagesPath));
-  app.use('/images', express.static(fallbackImagesPath));
+  // Cache-Control explicite : sans ça, certains navigateurs (mobile surtout) mettent en cache de façon
+  // "heuristique" et peuvent garder une ancienne image cassée en mémoire très longtemps sans jamais revérifier.
+  const staticOptions = {
+    setHeaders: (res: express.Response) => {
+      res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
+    }
+  };
+  app.use('/images', express.static(imagesPath, staticOptions));
+  app.use('/images', express.static(fallbackImagesPath, staticOptions));
 
   // Vite middleware setup
   if (!isProd) {
@@ -1306,8 +1313,11 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, staticOptions));
+    // index.html ne doit JAMAIS être mis en cache : sinon le navigateur peut continuer à charger
+    // une ancienne page (avec d'anciens noms de fichiers JS/CSS) après chaque nouveau déploiement.
     app.get('*', (req, res) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
