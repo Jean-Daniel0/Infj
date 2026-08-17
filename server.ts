@@ -1304,9 +1304,29 @@ async function startServer() {
     } catch (e: any) { info.dist_error = e.message; }
     try {
       info.images_dir_exists = fs.existsSync(imagesPath);
-      if (info.images_dir_exists) info.images_dir_contents = fs.readdirSync(imagesPath);
+      if (info.images_dir_exists) {
+        const files = fs.readdirSync(imagesPath);
+        info.images_dir_contents = files.map(f => {
+          const stat = fs.statSync(path.join(imagesPath, f));
+          return { name: f, size: stat.size };
+        });
+      }
     } catch (e: any) { info.images_dir_error = e.message; }
     res.json(info);
+  });
+
+  // Route de test : sert le logo directement en lisant les octets à la main,
+  // sans passer par express.static, pour isoler la cause exacte du problème.
+  app.get('/api/debug/logo-raw', (req, res) => {
+    try {
+      const filePath = path.join(imagesPath, 'logo.png');
+      const buffer = fs.readFileSync(filePath);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Content-Length', buffer.length);
+      res.send(buffer);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
   });
 
   // Register image routes before Vite middleware to ensure they take precedence and serve reliably
