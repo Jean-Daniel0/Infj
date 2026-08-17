@@ -1350,6 +1350,21 @@ async function startServer() {
     }
   });
 
+  // Route de test : un minuscule pixel rouge 1x1 généré à la volée (68 octets),
+  // pour vérifier si la TAILLE de la réponse est le facteur déterminant.
+  app.get('/api/debug/tiny-pixel', (req, res) => {
+    const tinyPngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(`
+      <!DOCTYPE html>
+      <html><body style="background:#eee; text-align:center; padding: 40px; font-family: sans-serif;">
+        <h2>Test : minuscule pixel rouge (68 octets)</h2>
+        <img src="data:image/png;base64,${tinyPngBase64}" style="width: 100px; height: 100px; border: 3px solid blue;" alt="Pixel test" />
+        <p>Si tu vois un carré ROUGE avec une bordure BLEUE ci-dessus, le problème vient de la taille des grosses images.</p>
+      </body></html>
+    `);
+  });
+
   // Register image routes before Vite middleware to ensure they take precedence and serve reliably
   // Cache-Control explicite : sans ça, certains navigateurs (mobile surtout) mettent en cache de façon
   // "heuristique" et peuvent garder une ancienne image cassée en mémoire très longtemps sans jamais revérifier.
