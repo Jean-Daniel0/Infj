@@ -1329,6 +1329,27 @@ async function startServer() {
     }
   });
 
+  // Route de test : sert le logo intégré directement en base64 dans le HTML (aucune requête binaire séparée)
+  app.get('/api/debug/logo-embedded', (req, res) => {
+    try {
+      const filePath = path.join(imagesPath, 'logo.png');
+      const buffer = fs.readFileSync(filePath);
+      const base64 = buffer.toString('base64');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(`
+        <!DOCTYPE html>
+        <html><body style="background:#eee; text-align:center; padding: 40px; font-family: sans-serif;">
+          <h2>Test : image intégrée en base64 (aucune requête séparée)</h2>
+          <p>Taille du fichier lu sur disque : ${buffer.length} octets</p>
+          <img src="data:image/png;base64,${base64}" style="max-width: 300px; border: 3px solid red;" alt="Test logo" />
+          <p>Si tu vois le logo ci-dessus, le fichier est intact et le problème vient de la façon dont les images sont servies en HTTP séparé.</p>
+        </body></html>
+      `);
+    } catch (e: any) {
+      res.status(500).send('Erreur: ' + e.message);
+    }
+  });
+
   // Register image routes before Vite middleware to ensure they take precedence and serve reliably
   // Cache-Control explicite : sans ça, certains navigateurs (mobile surtout) mettent en cache de façon
   // "heuristique" et peuvent garder une ancienne image cassée en mémoire très longtemps sans jamais revérifier.
