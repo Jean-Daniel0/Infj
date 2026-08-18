@@ -1436,11 +1436,8 @@ function previewCertificatePopup(inscriptionId, courseTitle, studentName, certNu
                         <div>
                             <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
                                 <img src="/images/logo.png" style="height: 44px; object-fit: contain;" alt="INFJ" />
-                                <div style="width: 1.5px; height: 32px; background: rgba(0, 51, 102, 0.25);"></div>
-                                <img src="/images/michel_jd_groupe_ltd.png" style="height: 44px; object-fit: contain;" alt="Michel-JD" />
                             </div>
                             <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: 700; color: #003366; text-transform: uppercase; margin-top: 8px; letter-spacing: 0.5px;">Institut National de Formation des Jeunes</div>
-                            <div style="font-family: 'Inter', sans-serif; font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: #f47c20; font-weight: 600; margin-top: 2px;">RÉPUBLIQUE D'HAÏTI // MICHEL-JD GROUPE LTD</div>
                         </div>
 
                         <div style="width: 100px; height: 1px; background: linear-gradient(90deg, transparent, #f47c20, transparent); margin: 6px auto;"></div>

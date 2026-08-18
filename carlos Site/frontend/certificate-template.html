@@ -328,8 +328,6 @@
     <div class="cert-logo-container">
       <div class="cert-logo" style="display: flex; align-items: center; justify-content: center; gap: 16px;">
         <img id="img-logo-infj" src="/images/logo.png" alt="Logo INFJ" onerror="if (window.handleLogoError) { window.handleLogoError(this, 'infj'); } else { this.onerror=null; this.src='https://nnppbnqavajmublpfhkj.supabase.co/storage/v1/object/public/videos/logo.png'; }" style="height: 48px;" />
-        <div style="width: 1.5px; height: 35px; background-color: rgba(0, 51, 102, 0.25);"></div>
-        <img id="img-logo-mjd" src="/images/michel_jd_groupe_ltd.png" alt="Logo Michel-JD" onerror="if (window.handleLogoError) { window.handleLogoError(this, 'mjd'); } else { this.onerror=null; this.src='https://nnppbnqavajmublpfhkj.supabase.co/storage/v1/object/public/videos/michel_jd_groupe_ltd.png'; }" style="height: 48px;" />
       </div>
       <div class="cert-logo-text" style="font-size: 19px; margin-top: 8px;">Institut National de Formation des Jeunes</div>
       <div class="cert-tagline" style="display:none;"></div>
@@ -409,9 +407,6 @@
     if (type === 'infj') {
       fallback.innerHTML = `<span style="font-size: 22px; font-weight: bold; font-family: 'Times New Roman', 'Georgia', serif; letter-spacing: 2px;">I.N.F.J</span>`;
       fallback.style.cssText = 'height: 48px; display: flex; align-items: center; justify-content: center; color: #003366; font-weight: bold;';
-    } else {
-      fallback.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1;"><span style="font-size: 14px; font-weight: 800; font-family: 'Arial', sans-serif; letter-spacing: 1px;">MICHEL-JD</span><span style="font-size: 8px; font-weight: bold; letter-spacing: 1.5px; opacity: 0.75;">GROUPE LTD</span></div>`;
-      fallback.style.cssText = 'height: 48px; display: flex; align-items: center; justify-content: center; color: #003366;';
     }
     img.parentNode.insertBefore(fallback, img);
   };
