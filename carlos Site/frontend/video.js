@@ -7,6 +7,8 @@ import { PAYMENT_CONFIG } from './config.js'
 let currentVideos = []
 let currentCourseType = 'web'
 let currentVideoUrl = ''
+let currentUserId = null
+let completedVideoIndices = new Set()
 
 // Mapping des noms de cours vers les types
 const courseTypeMap = {
@@ -33,6 +35,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.location.href = `login.html?redirect=video.html?course=${courseType}`
         return
     }
+    currentUserId = user.id
+    loadCompletedVideos()
 
     // 2. Chercher les informations de prix de ce cours vidéo dans la base de données
     let courseData = null
@@ -438,6 +442,13 @@ function displayVideos(videos) {
 function playVideo(index) {
     const video = currentVideos[index]
     if (!video) return
+
+    // Verrou défensif : même si l'appel ne vient pas d'un clic sur la playlist (ex: console, ancien lien),
+    // on empêche toujours l'accès à un module dont le précédent n'est pas terminé.
+    if (!isVideoUnlocked(index)) {
+        window.showLockedVideoMessage()
+        return
+    }
     
     const modal = document.getElementById('videoPlayerModal')
     const videoContainer = document.getElementById('videoPlayerContainer')
@@ -493,7 +504,7 @@ function playVideo(index) {
             
             <!-- Logo WEEL TECH en filigrane (Watermark) -->
             <div class="video-watermark" style="position: absolute; top: 18px; left: 18px; pointer-events: none; transition: opacity 0.3s; z-index: 10; display: flex; align-items: center; gap: 8px;">
-                <img src="/images/weel_tech_logo.png" style="height: 38px; width: auto; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.75)); background: rgba(255,255,255,0.92); padding: 5px 10px; border-radius: 6px;" alt="WEEL TECH Logo">
+                <img src="/images/weel_tech_logo.png" style="height: 38px; width: auto; filter: drop-shadow(0 2px 8px rgba(255,255,255,0.55));" alt="WEEL TECH Logo">
             </div>
 
             <!-- Grand bouton central de lecture quand en pause -->
@@ -589,6 +600,8 @@ function playVideo(index) {
         // Fin de la vidéo si c'est la dernière
         videoEl.addEventListener('ended', () => {
             console.log('Vidéo terminée !');
+            markVideoAsCompleted(index)
+            renderModalPlaylist(index) // rafraîchit la playlist pour débloquer le module suivant
             if (index === currentVideos.length - 1) {
                 console.log('Dernière vidéo du cours complétée.');
                 const certContainer = document.getElementById('certificateClaimContainer');
@@ -712,6 +725,35 @@ function playVideo(index) {
     }
 }
 
+// --- Gestion de la progression séquentielle des modules ---
+// Un module N+1 reste verrouillé tant que le module N n'a pas été regardé jusqu'à la fin.
+// Persisté en local (par utilisateur + cours) pour survivre à un rechargement de page.
+function getProgressStorageKey() {
+    return `infj_video_progress_${currentUserId}_${currentCourseType}`
+}
+
+function loadCompletedVideos() {
+    try {
+        const raw = localStorage.getItem(getProgressStorageKey())
+        completedVideoIndices = new Set(raw ? JSON.parse(raw) : [])
+    } catch {
+        completedVideoIndices = new Set()
+    }
+}
+
+function markVideoAsCompleted(index) {
+    completedVideoIndices.add(index)
+    try {
+        localStorage.setItem(getProgressStorageKey(), JSON.stringify([...completedVideoIndices]))
+    } catch { /* stockage indisponible, on continue sans persister */ }
+}
+
+// Un module est débloqué si c'est le premier, ou si le précédent a déjà été complété
+function isVideoUnlocked(index) {
+    if (index === 0) return true
+    return completedVideoIndices.has(index - 1)
+}
+
 // Fonction de rendu de la playlist dynamique sous le lecteur dans la modal
 function renderModalPlaylist(currentIndex) {
     const slider = document.getElementById('videoModalPlaylistSlider')
@@ -724,18 +766,32 @@ function renderModalPlaylist(currentIndex) {
     
     slider.innerHTML = currentVideos.map((video, idx) => {
         const isCurrent = idx === currentIndex
+        const unlocked = isVideoUnlocked(idx)
+        const isCompleted = completedVideoIndices.has(idx)
         const thumbnailSrc = video.thumbnailUrl || video.previewUrl || ''
         const borderStyle = isCurrent ? 'border: 2px solid #f47c20; background: rgba(244, 124, 32, 0.15);' : 'border: 1px solid #1e293b; background: rgba(15, 23, 42, 0.6);'
-        const opacityStyle = isCurrent ? 'opacity: 1;' : 'opacity: 0.7; cursor: pointer;'
+        const opacityStyle = !unlocked ? 'opacity: 0.4; cursor: not-allowed;' : (isCurrent ? 'opacity: 1;' : 'opacity: 0.7; cursor: pointer;')
         const durationText = video.duration ? formatDuration(video.duration) : ''
-        
+        const clickHandler = unlocked ? `onclick="window.playVideo(${idx})"` : `onclick="window.showLockedVideoMessage()"`
+
+        let statusLabel
+        if (isCompleted) {
+            statusLabel = '<span style="font-size: 0.6rem; color: #22c55e; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">✓ Terminé</span>'
+        } else if (isCurrent) {
+            statusLabel = '<span style="font-size: 0.6rem; color: #f47c20; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">● LECTURE</span>'
+        } else if (!unlocked) {
+            statusLabel = '<span style="font-size: 0.6rem; color: #64748b; font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">🔒 Verrouillé</span>'
+        } else {
+            statusLabel = '<span style="font-size: 0.6rem; color: #64748b; font-weight: 500; text-transform: uppercase;">Cliquez pour lire</span>'
+        }
+
         return `
-            <div onclick="window.playVideo(${idx})" class="modal-playlist-item" style="flex: 0 0 160px; width: 160px; border-radius: 8px; overflow: hidden; ${borderStyle} ${opacityStyle} transition: all 0.2s; display: flex; flex-direction: column; cursor: pointer;" title="Accéder au module : ${video.title || 'Partie ' + (idx + 1)}">
+            <div ${clickHandler} class="modal-playlist-item" style="flex: 0 0 160px; width: 160px; border-radius: 8px; overflow: hidden; ${borderStyle} ${opacityStyle} transition: all 0.2s; display: flex; flex-direction: column; cursor: pointer;" title="${unlocked ? 'Accéder au module : ' + (video.title || 'Partie ' + (idx + 1)) : 'Terminez le module précédent pour débloquer celui-ci'}">
                 <div style="position: relative; width: 100%; height: 90px; background: #000; overflow: hidden;">
                     ${thumbnailSrc 
-                        ? `<img src="${thumbnailSrc}" alt="${video.title || 'Partie ' + (idx + 1)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                           <div style="display:none; position: absolute; inset:0; align-items:center; justify-content:center; background: rgba(0,0,0,0.5); font-size: 1.1rem; color: white;">▶</div>`
-                        : `<div style="display:flex; position: absolute; inset:0; align-items:center; justify-content:center; background: rgba(15, 23, 42, 0.8); font-size: 1.1rem; color: white;">▶</div>`
+                        ? `<img src="${thumbnailSrc}" alt="${video.title || 'Partie ' + (idx + 1)}" style="width: 100%; height: 100%; object-fit: cover; ${!unlocked ? 'filter: grayscale(1);' : ''}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                           <div style="display:none; position: absolute; inset:0; align-items:center; justify-content:center; background: rgba(0,0,0,0.5); font-size: 1.1rem; color: white;">${unlocked ? '▶' : '🔒'}</div>`
+                        : `<div style="display:flex; position: absolute; inset:0; align-items:center; justify-content:center; background: rgba(15, 23, 42, 0.8); font-size: 1.1rem; color: white;">${unlocked ? '▶' : '🔒'}</div>`
                     }
                     <div style="position: absolute; bottom: 4px; left: 6px; background: rgba(0,0,0,0.75); color: white; padding: 2px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; font-family: monospace;">#${idx + 1}</div>
                     ${durationText ? `<div style="position: absolute; bottom: 4px; right: 6px; background: rgba(0,0,0,0.75); color: white; padding: 2px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: 600; font-family: monospace;">${durationText}</div>` : ''}
@@ -744,14 +800,16 @@ function renderModalPlaylist(currentIndex) {
                     <h5 style="margin: 0; color: ${isCurrent ? '#f47c20' : '#e2e8f0'}; font-size: 0.75rem; font-weight: ${isCurrent ? '800' : '500'}; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 32px;" title="${video.title || 'Module ' + (idx + 1)}">
                         ${video.title || 'Module de cours'}
                     </h5>
-                    ${isCurrent 
-                        ? '<span style="font-size: 0.6rem; color: #f47c20; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">● LECTURE</span>' 
-                        : '<span style="font-size: 0.6rem; color: #64748b; font-weight: 500; text-transform: uppercase;">Cliquez pour lire</span>'
-                    }
+                    ${statusLabel}
                 </div>
             </div>
         `
     }).join('')
+}
+
+// Message affiché quand l'utilisateur tente d'accéder à un module verrouillé
+window.showLockedVideoMessage = function() {
+    alert('🔒 Ce module est verrouillé.\n\nTerminez le module précédent (regardez-le jusqu\'à la fin) pour débloquer celui-ci.')
 }
 
 // Fermer le lecteur vidéo
