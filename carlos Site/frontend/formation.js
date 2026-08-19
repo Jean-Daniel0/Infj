@@ -107,14 +107,21 @@ function renderFormations(formationsList, container) {
         else if (titleLower.includes('site web') || titleLower.includes('création de site')) redirectArg = 'web';
         else if (titleLower.includes('dropshipping')) redirectArg = 'dropshipping';
 
+        const colorHex = { orange: '#f47c20', blue: '#003366', green: '#28a745' }[color] || '#f47c20';
+        const aboutText = (course.description_longue || description).replace(/'/g, "\\'").replace(/\n/g, ' ');
+        const safeTitle = title.replace(/'/g, "\\'");
+
         return `
             <div class="premium-course-card ${color}-border">
                 <span class="course-badge">Préenregistré</span>
                 <h3>🎓 ${title}</h3>
                 <p>${description}</p>
-                <button onclick="redirectToCourse('${redirectArg}')" class="course-btn ${color}-btn">
-                    Accéder à la formation
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="redirectToCourse('${redirectArg}')" class="course-btn ${color}-btn" style="flex: 1;">
+                        Accéder à la formation
+                    </button>
+                    <button onclick="window.showCourseAboutModal && window.showCourseAboutModal('${safeTitle}', '${aboutText}')" title="À propos de cette formation" style="flex-shrink: 0; width: 42px; border-radius: 25px; border: 2px solid ${colorHex}; color: ${colorHex}; background: #fff; font-weight: bold; cursor: pointer; font-size: 1rem;">ℹ️</button>
+                </div>
             </div>
         `;
     }).join('');
