@@ -267,38 +267,36 @@ function displayUserCourses() {
 
             return `
                 <div class="course-card-list active">
-                    <div class="course-list-main-info">
-                        <div class="course-list-thumb">
-                            <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer" onerror="this.onerror=null;this.src='/images/pullman_toulouse.jpeg';">
+                    <div class="course-list-thumb">
+                        <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer" onerror="this.onerror=null;this.src='/images/pullman_toulouse.jpeg';">
+                    </div>
+                    <div class="course-list-body" data-progress-text="${prog}%">
+                        <span class="course-status" style="background: ${statusBg}; color: ${statusColor}; font-size: 0.72rem; font-weight: 700; padding: 2px 10px; border-radius: 12px; text-transform: uppercase; display: inline-block; width: fit-content; text-align: center;">${statusLabel}</span>
+                        <h3>${title}</h3>
+                        <div style="font-size: 0.8rem; color: #64748b; font-family: 'Inter', sans-serif;">
+                            📅 Demande: <strong>${enrollDate}</strong>
                         </div>
-                        <div class="course-list-details" data-progress-text="${prog}%">
-                            <span class="course-status" style="background: ${statusBg}; color: ${statusColor}; font-size: 0.72rem; font-weight: 700; padding: 2px 10px; border-radius: 12px; text-transform: uppercase; display: inline-block; width: fit-content; text-align: center; margin-bottom: 4px;">${statusLabel}</span>
-                            <h3>${title}</h3>
-                            <div style="font-size: 0.8rem; color: #64748b; font-family: 'Inter', sans-serif;">
-                                📅 Demande: <strong>${enrollDate}</strong>
+
+                        <div class="course-list-divider student" style="flex-direction: column; align-items: flex-start; gap: 4px; font-size: 0.8rem;">
+                            <div style="font-weight: 700; color: #003366;">👤 ${prenomEtudiant} ${nomEtudiant}</div>
+                            <div style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 100%;">✉️ ${emailEtudiant}</div>
+                            <div>📞 ${phoneEtudiant}</div>
+                        </div>
+
+                        <div class="course-list-progress-col" style="min-width: 0;">
+                            <div class="progress-bar" style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 4px;">
+                                <div class="progress-fill" style="width: ${prog}%; height: 100%; background: #28a745; transition: width 0.5s ease;"></div>
                             </div>
+                            <span class="progress-text" style="font-size: 0.75rem; font-weight: 700; color: #475569;">${prog}% complété</span>
                         </div>
-                    </div>
 
-                    <div class="course-list-divider student">
-                        <div style="font-weight: 700; color: #003366;">👤 ${prenomEtudiant} ${nomEtudiant}</div>
-                        <div style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 170px;">✉️ ${emailEtudiant}</div>
-                        <div>📞 ${phoneEtudiant}</div>
-                    </div>
-
-                    <div class="course-list-progress-col">
-                        <div class="progress-bar" style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 4px;">
-                            <div class="progress-fill" style="width: ${prog}%; height: 100%; background: #28a745; transition: width 0.5s ease;"></div>
+                        <div class="course-list-actions-col">
+                            ${course.status === 'acceptee' 
+                                ? `<button class="btn-primary" onclick="openCourse('${course.formation_id}')" style="width: 100%; padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; height: auto; text-transform: none; letter-spacing: normal;">Continuer</button>`
+                                : `<button class="btn-primary" disabled style="width: 100%; padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; background: #cbd5e1; color: #64748b; border: none; cursor: not-allowed; height: auto; text-transform: none; letter-spacing: normal;">En attente</button>`
+                            }
+                            <button class="btn-secondary" onclick="viewProgress('${course.formation_id}')" style="width: 100%; margin-top: 8px; padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; color: #475569; height: auto;">Détails</button>
                         </div>
-                        <span class="progress-text" style="font-size: 0.75rem; font-weight: 700; color: #475569;">${prog}% complété</span>
-                    </div>
-
-                    <div class="course-list-actions-col">
-                        ${course.status === 'acceptee' 
-                            ? `<button class="btn-primary" onclick="openCourse('${course.formation_id}')" style="padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; height: auto; text-transform: none; letter-spacing: normal;">Continuer</button>`
-                            : `<button class="btn-primary" disabled style="padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; background: #cbd5e1; color: #64748b; border: none; cursor: not-allowed; height: auto; text-transform: none; letter-spacing: normal;">En attente</button>`
-                        }
-                        <button class="btn-secondary" onclick="viewProgress('${course.formation_id}')" style="padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; color: #475569; height: auto;">Détails</button>
                     </div>
                 </div>
             `;
@@ -327,38 +325,36 @@ function displayUserCourses() {
                 const emailEtudiant = course.email || currentUser?.email || 'Non spécifié';
 
                 return `
-                    <div class="course-card-list active" style="border-left-color: #28a745;">
-                        <div class="course-list-main-info">
-                            <div class="course-list-thumb">
-                                <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer" onerror="this.onerror=null;this.src='/images/pullman_toulouse.jpeg';">
+                    <div class="course-card-list active" style="border-top-color: #28a745;">
+                        <div class="course-list-thumb">
+                            <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer" onerror="this.onerror=null;this.src='/images/pullman_toulouse.jpeg';">
+                        </div>
+                        <div class="course-list-body" data-progress-text="Terminé">
+                            <span class="course-status" style="background: #dcfce7; color: #166534; font-size: 0.72rem; font-weight: 700; padding: 2px 10px; border-radius: 12px; text-transform: uppercase; display: inline-block; width: fit-content; text-align: center;">Terminée ✓</span>
+                            <h3>${title}</h3>
+                            <div style="font-size: 0.8rem; color: #64748b; font-family: 'Inter', sans-serif;">
+                                🏆 Cycle académique accompli !
                             </div>
-                            <div class="course-list-details" data-progress-text="Terminé">
-                                <span class="course-status" style="background: #dcfce7; color: #166534; font-size: 0.72rem; font-weight: 700; padding: 2px 10px; border-radius: 12px; text-transform: uppercase; display: inline-block; width: fit-content; text-align: center; margin-bottom: 4px;">Terminée ✓</span>
-                                <h3>${title}</h3>
-                                <div style="font-size: 0.8rem; color: #64748b; font-family: 'Inter', sans-serif;">
-                                    🏆 Cycle académique accompli !
+
+                            <div class="course-list-divider student" style="flex-direction: column; align-items: flex-start; gap: 4px; font-size: 0.8rem;">
+                                <div style="font-weight: 700; color: #003366;">👤 ${prenomEtudiant} ${nomEtudiant}</div>
+                                <div style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 100%;">✉️ ${emailEtudiant}</div>
+                            </div>
+
+                            <div class="course-list-progress-col" style="min-width: 0;">
+                                <div class="progress-bar" style="width: 100%; height: 8px; background: #28a745; border-radius: 4px; overflow: hidden; margin-bottom: 4px;">
+                                    <div class="progress-fill" style="width: 100%; height: 100%; background: #28a745; transition: width 0.5s ease;"></div>
                                 </div>
+                                <span class="progress-text" style="font-size: 0.75rem; font-weight: 700; color: #166534;">100% Terminée</span>
                             </div>
-                        </div>
 
-                        <div class="course-list-divider student">
-                            <div style="font-weight: 700; color: #003366;">👤 ${prenomEtudiant} ${nomEtudiant}</div>
-                            <div style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 170px;">✉️ ${emailEtudiant}</div>
-                        </div>
-
-                        <div class="course-list-progress-col">
-                            <div class="progress-bar" style="width: 100%; height: 8px; background: #28a745; border-radius: 4px; overflow: hidden; margin-bottom: 4px;">
-                                <div class="progress-fill" style="width: 100%; height: 100%; background: #28a745; transition: width 0.5s ease;"></div>
+                            <div class="course-list-actions-col">
+                                <button class="btn-primary" onclick="openCourse('${course.formation_id}')" style="width: 100%; padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; height: auto; text-transform: none; letter-spacing: normal; background-color: #28a745; border-color: #28a745;">Revoir le cours</button>
+                                ${course.certificat_emission 
+                                    ? `<button class="btn-secondary" onclick="scrollToCertificates()" style="width: 100%; margin-top: 8px; padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; color: #003366; height: auto; font-family: inherit;">Certificat obtenu</button>`
+                                    : `<button class="btn-secondary" disabled style="width: 100%; margin-top: 8px; padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; border: 1px solid #cbd5e1; background: #ebeef2; color: #64748b; height: auto; cursor: not-allowed; font-family: inherit;">Attestation en attente</button>`
+                                }
                             </div>
-                            <span class="progress-text" style="font-size: 0.75rem; font-weight: 700; color: #166534;">100% Terminée</span>
-                        </div>
-
-                        <div class="course-list-actions-col">
-                            <button class="btn-primary" onclick="openCourse('${course.formation_id}')" style="padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; height: auto; text-transform: none; letter-spacing: normal; background-color: #28a745; border-color: #28a745;">Revoir le cours</button>
-                            ${course.certificat_emission 
-                                ? `<button class="btn-secondary" onclick="scrollToCertificates()" style="padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; color: #003366; height: auto; font-family: inherit;">Certificat obtenu</button>`
-                                : `<button class="btn-secondary" disabled style="padding: 10px; font-size: 0.82rem; font-weight: bold; border-radius: 8px; border: 1px solid #cbd5e1; background: #ebeef2; color: #64748b; height: auto; cursor: not-allowed; font-family: inherit;">Attestation en attente</button>`
-                            }
                         </div>
                     </div>
                 `;
@@ -437,47 +433,41 @@ function displayAvailableCourses() {
         
         return `
             <div class="course-card-list active">
-                <div class="course-list-main-info">
-                    <div class="course-list-thumb">
-                        <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer" onerror="this.onerror=null;this.src='/images/pullman_toulouse.jpeg';">
-                    </div>
-                    <div class="course-list-details">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px; flex-wrap: wrap;">
-                            ${displayPrice}
-                            <span style="background: #e0f2fe; color: #003366; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">🌐 ${modalite}</span>
-                        </div>
-                        <h3>${title}</h3>
-                        <p class="course-list-desc">${desc}</p>
-                    </div>
+                <div class="course-list-thumb">
+                    <img src="${imageUrl}" alt="${title}" referrerPolicy="no-referrer" onerror="this.onerror=null;this.src='/images/pullman_toulouse.jpeg';">
                 </div>
+                <div class="course-list-body">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                        ${displayPrice}
+                        <span style="background: #e0f2fe; color: #003366; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">🌐 ${modalite}</span>
+                    </div>
+                    <h3>${title}</h3>
+                    <p class="course-list-desc">${desc}</p>
 
-                <div class="course-list-divider teacher">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 1.2rem;">👨‍🏫</span>
-                        <div style="display: flex; flex-direction: column;">
-                            <span style="font-weight: 700; color: #003366; font-size: 0.88rem;">${formateurNom}</span>
-                            <span style="color: #64748b; font-size: 0.75rem;">${formateurRole}</span>
+                    <div class="course-list-divider teacher">
+                        <span style="font-size: 1.1rem;">👨‍🏫</span>
+                        <div style="display: flex; flex-direction: column; min-width: 0;">
+                            <span style="font-weight: 700; color: #003366; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${formateurNom}</span>
+                            <span style="color: #64748b; font-size: 0.72rem;">${formateurRole}</span>
                         </div>
                     </div>
-                </div>
 
-                <div class="course-list-divider meta">
-                    <div style="display: flex; align-items: center; gap: 6px;">⏱️ Durée : <strong>${duree}</strong></div>
-                    <div style="display: flex; align-items: center; gap: 6px;">📅 Début : <strong>${dateDebut}</strong></div>
-                    <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
-                        <span style="font-size: 0.82rem; font-weight: 700; color: ${isCompleted ? '#ef4444' : '#15803d'};">
+                    <div class="course-list-divider meta" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem;">⏱️ Durée : <strong>${duree}</strong></div>
+                        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem;">📅 Début : <strong>${dateDebut}</strong></div>
+                        <span style="font-size: 0.8rem; font-weight: 700; color: ${isCompleted ? '#ef4444' : '#15803d'};">
                             ${isCompleted ? '🚨 Complet' : `👥 Places : <strong>${placesRestantes}</strong> / ${placesMax}`}
                         </span>
                     </div>
-                </div>
 
-                <div class="course-list-actions-col">
-                    <button class="btn-primary" onclick="enrollCourse('${course.id}')" ${disabledAttr} style="width: 100%; font-weight: 700; font-size: 0.85rem; padding: 12px; border-radius: 10px; height: auto; text-transform: none; letter-spacing: normal;">
-                        ${buttonText}
-                    </button>
-                    <button class="btn-secondary" onclick="viewDetails('${course.id}')" style="width: 100%; margin-top: 8px; font-weight: 700; font-size: 0.85rem; padding: 10px; border-radius: 10px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
-                        ℹ️ À propos
-                    </button>
+                    <div class="course-list-actions-col">
+                        <button class="btn-primary" onclick="enrollCourse('${course.id}')" ${disabledAttr} style="width: 100%; font-weight: 700; font-size: 0.85rem; padding: 12px; border-radius: 10px; height: auto; text-transform: none; letter-spacing: normal;">
+                            ${buttonText}
+                        </button>
+                        <button class="btn-secondary" onclick="viewDetails('${course.id}')" style="width: 100%; margin-top: 8px; font-weight: 700; font-size: 0.85rem; padding: 10px; border-radius: 10px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
+                            ℹ️ À propos
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
