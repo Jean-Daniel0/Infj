@@ -475,8 +475,8 @@ function displayAvailableCourses() {
                     <button class="btn-primary" onclick="enrollCourse('${course.id}')" ${disabledAttr} style="width: 100%; font-weight: 700; font-size: 0.85rem; padding: 12px; border-radius: 10px; height: auto; text-transform: none; letter-spacing: normal;">
                         ${buttonText}
                     </button>
-                    <button class="btn-secondary" onclick="viewDetails('${course.id}')" style="width: 100%; margin-top: 8px; font-weight: 700; font-size: 0.85rem; padding: 10px; border-radius: 10px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; display: none;">
-                        Détails
+                    <button class="btn-secondary" onclick="viewDetails('${course.id}')" style="width: 100%; margin-top: 8px; font-weight: 700; font-size: 0.85rem; padding: 10px; border-radius: 10px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
+                        ℹ️ À propos
                     </button>
                 </div>
             </div>
@@ -1213,7 +1213,12 @@ function viewProgress(courseId) {
 function viewDetails(courseId) {
     const course = availableCourses.find(c => c.id === courseId)
     if (!course) return
-    showMessage(`Détails de "${course.titre}" - Informations additionnelles délivrées sous 48h.`, 'info')
+    const description = course.description_longue || course.description || `Formation "${course.titre}" proposée par l'Institut National de Formation des Jeunes.`
+    if (window.showCourseAboutModal) {
+        window.showCourseAboutModal(course.titre, description)
+    } else {
+        showMessage(description, 'info')
+    }
 }
 
 // Défilement vers les cours disponibles

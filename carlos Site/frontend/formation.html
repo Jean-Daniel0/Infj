@@ -258,33 +258,8 @@
             const activeContent = document.getElementById(`tab-${tabId}`);
             if (activeContent) activeContent.classList.add('active');
         }
-
-        // --- Fenêtre "À propos" réutilisable pour n'importe quelle carte de formation/cours/vidéo ---
-        // modulesList est optionnel : un tableau de chaînes (ex: ["Introduction...", "Développement..."])
-        window.showCourseAboutModal = function(title, description, modulesList) {
-            const modalTitle = document.getElementById('aboutModalTitle');
-            const modalDesc = document.getElementById('aboutModalDescription');
-            const modalModulesWrap = document.getElementById('aboutModalModulesWrap');
-            const modalModulesList = document.getElementById('aboutModalModulesList');
-
-            modalTitle.textContent = title || 'À propos';
-            modalDesc.textContent = description || '';
-
-            if (Array.isArray(modulesList) && modulesList.length > 0) {
-                modalModulesList.innerHTML = modulesList.map((m, i) => `<li><strong>Module ${i + 1} :</strong> ${m}</li>`).join('');
-                modalModulesWrap.style.display = 'block';
-            } else {
-                modalModulesWrap.style.display = 'none';
-            }
-
-            document.getElementById('courseAboutModalOverlay').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-
-        window.closeCourseAboutModal = function() {
-            document.getElementById('courseAboutModalOverlay').style.display = 'none';
-            document.body.style.overflow = '';
-        }
+        // Les fonctions showCourseAboutModal / closeCourseAboutModal sont définies globalement
+        // dans navigation-standalone.js (chargé sur cette page) pour être réutilisables partout.
     </script>
 
     <!-- Fenêtre modale "À propos" (réutilisable pour toutes les cartes de la page) -->

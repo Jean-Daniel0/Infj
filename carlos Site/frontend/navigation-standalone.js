@@ -259,6 +259,37 @@ async function createNavigation(currentPage = '') {
 // clignotement d'images cassées, chargement ralenti — pour un bucket qui n'apporte
 // aucun bénéfice puisque les images locales (/images/...) fonctionnent déjà très bien.
 
+// --- Fenêtre "À propos" réutilisable pour n'importe quelle carte de formation/cours/vidéo ---
+// Nécessite que la page hôte contienne le HTML de la modale (#courseAboutModalOverlay, etc.)
+// modulesList est optionnel : un tableau de chaînes (ex: ["Introduction...", "Développement..."])
+window.showCourseAboutModal = function(title, description, modulesList) {
+    const overlay = document.getElementById('courseAboutModalOverlay')
+    if (!overlay) {
+        console.warn('[À propos] Modale absente de cette page.')
+        return
+    }
+    document.getElementById('aboutModalTitle').textContent = title || 'À propos'
+    document.getElementById('aboutModalDescription').textContent = description || ''
+
+    const modulesWrap = document.getElementById('aboutModalModulesWrap')
+    const modulesList_ = document.getElementById('aboutModalModulesList')
+    if (Array.isArray(modulesList) && modulesList.length > 0) {
+        modulesList_.innerHTML = modulesList.map((m, i) => `<li><strong>Module ${i + 1} :</strong> ${m}</li>`).join('')
+        modulesWrap.style.display = 'block'
+    } else {
+        modulesWrap.style.display = 'none'
+    }
+
+    overlay.style.display = 'flex'
+    document.body.style.overflow = 'hidden'
+}
+
+window.closeCourseAboutModal = function() {
+    const overlay = document.getElementById('courseAboutModalOverlay')
+    if (overlay) overlay.style.display = 'none'
+    document.body.style.overflow = ''
+}
+
 // Initialiser la navigation au chargement
 document.addEventListener('DOMContentLoaded', () => {
     // Déterminer la page actuelle
