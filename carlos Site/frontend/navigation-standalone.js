@@ -259,6 +259,17 @@ async function createNavigation(currentPage = '') {
 // clignotement d'images cassées, chargement ralenti — pour un bucket qui n'apporte
 // aucun bénéfice puisque les images locales (/images/...) fonctionnent déjà très bien.
 
+// Bascule l'affichage des détails additionnels d'une carte (cours, formation...) au clic sur "Voir plus"
+window.toggleCardDetails = function(buttonEl) {
+    const card = buttonEl.closest('.course-card-list, .premium-course-card')
+    if (!card) return
+    const details = card.querySelector('.course-card-extra-details')
+    if (!details) return
+    const isHidden = details.style.display === 'none' || !details.style.display
+    details.style.display = isHidden ? 'block' : 'none'
+    buttonEl.textContent = isHidden ? 'Voir moins ▴' : 'Voir plus ▾'
+}
+
 // --- Fenêtre "À propos" réutilisable pour n'importe quelle carte de formation/cours/vidéo ---
 // Nécessite que la page hôte contienne le HTML de la modale (#courseAboutModalOverlay, etc.)
 // modulesList est optionnel : un tableau de chaînes (ex: ["Introduction...", "Développement..."])

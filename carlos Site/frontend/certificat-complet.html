@@ -587,7 +587,8 @@
       sig2_role: dynamicFormateurRole,
       email: inscription.email,
       formateur_signature: metaModules.formateur_signature || '',
-      director_signature: metaModules.director_signature || '',
+      // Signature du directeur fondateur : fixe et permanente (n'est plus configurable via l'admin)
+      director_signature: '/images/signature_directeur.png',
       verificationUrl: verificationUrl
     };
   };

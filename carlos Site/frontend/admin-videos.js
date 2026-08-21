@@ -247,60 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
-  // Gestion de l'upload de la signature du directeur
-  const sigDirecteurBtn = document.getElementById('formationDirecteurSigUploadBtn')
-  const sigDirecteurFile = document.getElementById('formationDirecteurSigFile')
-  const sigDirecteurUrlInput = document.getElementById('formationDirecteurSigUrl')
-  const sigDirecteurProgress = document.getElementById('formationDirecteurSigProgress')
-
-  if (sigDirecteurBtn && sigDirecteurFile && sigDirecteurUrlInput) {
-    sigDirecteurBtn.addEventListener('click', async () => {
-      const file = sigDirecteurFile.files[0]
-      if (!file) {
-        alert('Veuillez sélectionner un fichier image pour la signature du directeur.')
-        return
-      }
-
-      if (sigDirecteurProgress) {
-        sigDirecteurProgress.textContent = "Téléchargement de la signature du directeur..."
-        sigDirecteurProgress.style.color = '#3b82f6'
-        sigDirecteurProgress.style.display = 'block'
-      }
-
-      try {
-        const bucket = 'cours'
-        const ext = file.name.split('.').pop()
-        const uniqueFileName = `signatures/sig-directeur-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`
-
-        const { error } = await supabase.storage
-          .from(bucket)
-          .upload(uniqueFileName, file, { 
-            upsert: true, 
-            contentType: file.type || 'image/png' 
-          })
-
-        if (error) throw error
-
-        const { data: storageUrlData } = supabase.storage
-          .from(bucket)
-          .getPublicUrl(uniqueFileName)
-
-        const publicUrl = storageUrlData?.publicUrl || ''
-        sigDirecteurUrlInput.value = publicUrl
-        
-        if (sigDirecteurProgress) {
-          sigDirecteurProgress.textContent = "✅ Signature directeur téléversée avec succès !"
-          sigDirecteurProgress.style.color = '#10b981'
-        }
-      } catch (err) {
-        console.error(err)
-        if (sigDirecteurProgress) {
-          sigDirecteurProgress.textContent = `❌ Erreur : ${err.message}`
-          sigDirecteurProgress.style.color = '#ef4444'
-        }
-      }
-    })
-  }
+  // La signature du directeur fondateur est désormais fixe et permanente
+  // (voir /images/signature_directeur.png) — plus de champ d'upload admin pour celle-ci.
+  // Seule la signature du formateur reste configurable à la création d'une formation.
 })
 
 const loadAllFormationsToSelect = async () => {
@@ -983,7 +932,7 @@ if (courseCreateForm) {
       const descLongue = document.getElementById('formationDescLongue').value.trim()
 
       const formateurSigUrl = document.getElementById('formationFormateurSigUrl') ? document.getElementById('formationFormateurSigUrl').value.trim() : ''
-      const directorSigUrl = document.getElementById('formationDirecteurSigUrl') ? document.getElementById('formationDirecteurSigUrl').value.trim() : ''
+      // La signature du directeur n'est plus configurable ici : elle est fixe (voir certificat-complet.html)
 
       // Mappage du statut de stockage
       let statutDb = 'active'
@@ -998,8 +947,7 @@ if (courseCreateForm) {
         formateur_role: formateurRole,
         image_couverture: imageUrl,
         status_label: statusLabel,
-        formateur_signature: formateurSigUrl,
-        director_signature: directorSigUrl
+        formateur_signature: formateurSigUrl
       }
 
       const payload = {
@@ -1117,19 +1065,14 @@ window.editFormationCourse = async (id) => {
     document.getElementById('formationPlacesMax').value = item.places_max || 50
     document.getElementById('formationImageUrl').value = meta.image_couverture || ''
     
-    // Pre-fill signatures if they exist
+    // Pre-fill signature du formateur si elle existe (le directeur est désormais fixe)
     if (document.getElementById('formationFormateurSigUrl')) {
       document.getElementById('formationFormateurSigUrl').value = meta.formateur_signature || ''
-    }
-    if (document.getElementById('formationDirecteurSigUrl')) {
-      document.getElementById('formationDirecteurSigUrl').value = meta.director_signature || ''
     }
 
     // Reset upload progresses
     const formateurSigProgress = document.getElementById('formationFormateurSigProgress')
     if (formateurSigProgress) formateurSigProgress.style.display = 'none'
-    const directeurSigProgress = document.getElementById('formationDirecteurSigProgress')
-    if (directeurSigProgress) directeurSigProgress.style.display = 'none'
     const coverProgress = document.getElementById('formationImageUploadProgress')
     if (coverProgress) coverProgress.style.display = 'none'
 
@@ -1163,8 +1106,6 @@ if (cancelEditBtn) {
     
     const formateurSigProgress = document.getElementById('formationFormateurSigProgress')
     if (formateurSigProgress) formateurSigProgress.style.display = 'none'
-    const directeurSigProgress = document.getElementById('formationDirecteurSigProgress')
-    if (directeurSigProgress) directeurSigProgress.style.display = 'none'
     const coverProgress = document.getElementById('formationImageUploadProgress')
     if (coverProgress) coverProgress.style.display = 'none'
 
