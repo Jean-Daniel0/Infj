@@ -94,7 +94,7 @@ function setupEventListeners() {
         tabInprogressBtn.addEventListener('click', () => {
             tabInprogressBtn.classList.add('active')
             tabCompletedBtn.classList.remove('active')
-            if (activeCoursesContainer) activeCoursesContainer.style.display = 'flex'
+            if (activeCoursesContainer) activeCoursesContainer.style.display = 'grid'
             if (completedCoursesContainer) completedCoursesContainer.style.display = 'none'
         })
 
@@ -102,7 +102,7 @@ function setupEventListeners() {
             tabCompletedBtn.classList.add('active')
             tabInprogressBtn.classList.remove('active')
             if (activeCoursesContainer) activeCoursesContainer.style.display = 'none'
-            if (completedCoursesContainer) completedCoursesContainer.style.display = 'flex'
+            if (completedCoursesContainer) completedCoursesContainer.style.display = 'grid'
         })
     }
 }
