@@ -1,0 +1,6 @@
+{
+  "name": "INFJ",
+  "description": "Plateforme d'apprentissage de l'Institut National de Formation des Jeunes (INFJ) avec cours, vidéos et authentification via Supabase.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

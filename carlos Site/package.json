@@ -1,0 +1,16 @@
+{
+  "name": "infj-site",
+  "version": "1.0.0",
+  "description": "Site web INFJ (frontend statique + Supabase)",
+  "scripts": {
+    "start": "python server_frontend.py",
+    "netlify:dev": "netlify dev --port 8888 --dir frontend"
+  },
+  "keywords": [
+    "infj",
+    "frontend",
+    "supabase"
+  ],
+  "author": "Institut National de Formation des Jeunes",
+  "license": "MIT"
+}

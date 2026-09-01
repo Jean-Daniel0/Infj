@@ -1,0 +1,3 @@
+# Aucune dépendance externe requise
+# Le serveur utilise uniquement les bibliothèques standard de Python 3
+
