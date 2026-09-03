@@ -406,27 +406,8 @@ const recordWebhookEventIfNew = async (eventId: string, type: string, payload: a
   return true;
 };
 
-// Base URL de la passerelle Bazik (toujours https://api.bazik.io peu importe le mode d'après les spécifications de l'API)
+// Base URL de la passerelle Bazik (toujours https://api.bazik.io, mode production uniquement)
 const BAZIK_BASE_URL = 'https://api.bazik.io';
-
-// Ajuste l'URL de redirection MonCash de manière résiliente.
-// Par défaut on est en PRODUCTION (le cas réel le plus courant) — on ne bascule en sandbox
-// que si BAZIK_SANDBOX ou MONCASH_SANDBOX est explicitement réglé sur 'true' sur Render.
-// (L'ancienne logique devinait le mode d'après le format de la clé secrète, ce qui forçait
-// le sandbox par erreur avec de vraies clés de production ne suivant pas ce format précis.)
-const adjustRedirectUrl = (url: string): string => {
-  if (!url) return url;
-
-  const isSandbox =
-    process.env.BAZIK_SANDBOX === 'true' ||
-    process.env.MONCASH_SANDBOX === 'true';
-
-  if (isSandbox && url.includes('moncashbutton.digicelgroup.com') && !url.includes('sandbox.moncashbutton.digicelgroup.com')) {
-    console.log('[Bazik Payment] Redirection MonCash réécrite vers le sandbox :', url);
-    return url.replace('moncashbutton.digicelgroup.com', 'sandbox.moncashbutton.digicelgroup.com');
-  }
-  return url;
-};
 
 let bazikTokenCache: string | null = null;
 let bazikTokenExpiry: number | null = null;
@@ -912,7 +893,7 @@ app.post('/api/bazik/pay-formation', async (req: express.Request, res: express.R
       return res.status(500).json({ error: 'Erreur création paiement Bazik (redirectUrl absent)' });
     }
 
-    const finalRedirectUrl = adjustRedirectUrl(data.redirectUrl);
+    const finalRedirectUrl = data.redirectUrl;
 
     res.json({
       redirectUrl: finalRedirectUrl,
@@ -1005,7 +986,7 @@ app.post('/api/bazik/pay-live', async (req: express.Request, res: express.Respon
       throw new Error('Erreur création paiement (redirectUrl nul)');
     }
 
-    const finalRedirectUrl = adjustRedirectUrl(data.redirectUrl);
+    const finalRedirectUrl = data.redirectUrl;
 
     res.json({
       redirectUrl: finalRedirectUrl,
@@ -1104,7 +1085,7 @@ app.post('/api/bazik/pay-video', async (req: express.Request, res: express.Respo
       throw new Error('Erreur création paiement (redirectUrl nul)');
     }
 
-    const finalRedirectUrl = adjustRedirectUrl(data.redirectUrl);
+    const finalRedirectUrl = data.redirectUrl;
 
     res.json({
       redirectUrl: finalRedirectUrl,
@@ -1223,7 +1204,7 @@ app.post('/api/bazik/pay-certificate', async (req: express.Request, res: express
       throw new Error('Erreur création paiement (redirectUrl nul)');
     }
 
-    const finalRedirectUrl = adjustRedirectUrl(data.redirectUrl);
+    const finalRedirectUrl = data.redirectUrl;
 
     res.json({
       redirectUrl: finalRedirectUrl,
@@ -1251,11 +1232,8 @@ app.post('/api/bazik/webhook', async (req: express.Request, res: express.Respons
       .digest('hex');
 
     if (expectedSig !== signature) {
-      console.warn('[Bazik Webhook] Échec de la signature HMAC (Simulée pour tests en sandbox si pas configurée)');
-      // In production, we yield, in sandbox we let it continue if signature is omitted/fails
-      if (process.env.NODE_ENV === "production" && process.env.BAZIK_WEBHOOK_SECRET) {
-        return res.status(401).send('Signature invalide');
-      }
+      console.warn('[Bazik Webhook] Échec de la vérification de la signature HMAC — requête rejetée.');
+      return res.status(401).send('Signature invalide');
     }
 
     const event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
