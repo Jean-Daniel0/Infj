@@ -72,8 +72,6 @@ app.get('/api/jitsi/token', async (req: any, res: any) => {
 
   console.log('=== TOKEN REQUEST ===');
   console.log('sessionId:', sessionId);
-  console.log('role demandé:', role);
-  console.log('estAdmin:', estAdmin);
 
   // Récupérer l'utilisateur connecté
   const authHeader = req.headers.authorization;
@@ -106,8 +104,6 @@ app.get('/api/jitsi/token', async (req: any, res: any) => {
       .eq('id', user.id)
       .maybeSingle();
 
-    console.log('Profil trouvé:', profil);
-    console.log('Role du profil:', profil?.role);
     console.log('Profil error:', profilError?.message || 'aucune');
 
     // AUTO-CREATION OU FALLBACK POUR L'ADMINISTRATEUR UNIQUE mradmin@infj.com
@@ -801,15 +797,6 @@ const traiterPaiementEchoue = async (event: any) => {
 };
 
 // Endpoints definitions
-app.get('/api/bazik/token', async (req: express.Request, res: express.Response) => {
-  try {
-    const token = await getBazikToken();
-    res.json({ success: true, token });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
 app.post('/api/bazik/pay-formation', async (req: express.Request, res: express.Response) => {
   const { user: authUser, error: authError } = await verifyAuthUser(req);
   if (!authUser) {
@@ -1219,19 +1206,31 @@ app.post('/api/bazik/pay-certificate', async (req: express.Request, res: express
 
 app.post('/api/bazik/webhook', async (req: express.Request, res: express.Response) => {
   try {
+    const webhookSecret = process.env.BAZIK_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error('[Bazik Webhook] BAZIK_WEBHOOK_SECRET absent : webhook désactivé.');
+      return res.status(500).send('Webhook non configuré');
+    }
+
     const signature = req.headers['x-bazik-signature'] as string;
     const timestamp = req.headers['x-bazik-timestamp'] as string;
     const eventId = req.headers['x-bazik-event-id'] as string;
+    if (!signature || !timestamp || !eventId) {
+      console.warn('[Bazik Webhook] En-têtes de signature manquants — requête rejetée.');
+      return res.status(401).send('Signature invalide');
+    }
     const rawBody = req.rawBody ? req.rawBody.toString('utf8') : JSON.stringify(req.body);
 
     const signedPayload = `${timestamp}.${eventId}.${rawBody}`;
     
     const expectedSig = 'v1=' + crypto
-      .createHmac('sha256', process.env.BAZIK_WEBHOOK_SECRET || '')
+      .createHmac('sha256', webhookSecret)
       .update(signedPayload)
       .digest('hex');
 
-    if (expectedSig !== signature) {
+    const sigBuf = Buffer.from(String(signature));
+    const expBuf = Buffer.from(expectedSig);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
       console.warn('[Bazik Webhook] Échec de la vérification de la signature HMAC — requête rejetée.');
       return res.status(401).send('Signature invalide');
     }
@@ -1264,7 +1263,7 @@ app.get('/api/bazik/status/:referenceId', async (req: express.Request, res: expr
   try {
     const t = await findTransaction(referenceId);
     if (t) {
-      return res.json({ status: 'completed', transaction: t });
+      return res.json({ status: 'completed' });
     }
 
     const { data: inscription } = await supabase
@@ -1274,17 +1273,7 @@ app.get('/api/bazik/status/:referenceId', async (req: express.Request, res: expr
       .maybeSingle();
 
     if (inscription && inscription.status === 'acceptee') {
-      return res.json({
-        status: 'completed',
-        transaction: {
-          reference_id: referenceId,
-          type: inscription.formation_id ? 'formation' : 'video',
-          item_id: inscription.formation_id || inscription.cours_video_id,
-          user_id: inscription.user_id,
-          montant_brut: inscription.montant_paye,
-          statut: 'completed'
-        }
-      });
+      return res.json({ status: 'completed' });
     }
 
     const pending = await findPendingPayment(referenceId);
@@ -1327,7 +1316,38 @@ app.post('/api/send-certificate-email', async (req: any, res: any) => {
     return res.status(400).json({ error: "Champs obligatoires manquants." });
   }
 
-  console.log(`[Email Service] Préparation de l'envoi pour ${studentName} (${email}) | URL: ${pdfUrl}`);
+  // L'e-mail doit être celui du compte connecté, sauf si l'appelant est administrateur.
+  const sameEmail = String(authUser.email || '').toLowerCase() === String(email).toLowerCase();
+  if (!sameEmail) {
+    const { data: caller } = await supabaseAdmin
+      .from('users')
+      .select('role')
+      .eq('id', authUser.id)
+      .maybeSingle();
+    if (!caller || caller.role !== 'admin') {
+      return res.status(403).json({ error: "Vous ne pouvez envoyer le certificat qu'à votre propre adresse e-mail." });
+    }
+  }
+
+  // Le PDF doit être en https et hébergé sur le même hôte que le Supabase du projet.
+  let pdfOk = false;
+  try {
+    const u = new URL(String(pdfUrl));
+    pdfOk = u.protocol === 'https:' && u.host === new URL(supabaseUrl).host;
+  } catch {}
+  if (!pdfOk) {
+    return res.status(400).json({ error: "Lien du certificat invalide." });
+  }
+
+  const escapeHtml = (v: any) => String(v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const safeName = escapeHtml(studentName);
+  const safeTitle = escapeHtml(courseTitle);
+  const safeUrl = escapeHtml(pdfUrl);
+  const safeSubjectTitle = String(courseTitle).replace(/[\r\n]+/g, ' ').trim();
+
+  console.log(`[Email Service] Préparation de l'envoi du certificat pour ${authUser.id}`);
 
   try {
     const resend = getResendClient();
@@ -1339,22 +1359,22 @@ app.post('/api/send-certificate-email', async (req: any, res: any) => {
             <img src="https://infj.onrender.com/images/logo.png" alt="Logo INFJ" style="height: 60px;" />
             <h2 style="color: #003366; margin-top: 12px; font-size: 22px; font-weight: 700;">Félicitations pour votre réussite !</h2>
           </div>
-          <p style="font-size: 15px; color: #334155; line-height: 1.6;">Bonjour <strong>${studentName}</strong>,</p>
+          <p style="font-size: 15px; color: #334155; line-height: 1.6;">Bonjour <strong>${safeName}</strong>,</p>
           <p style="font-size: 15px; color: #334155; line-height: 1.6;">C'est avec un immense plaisir que nous vous contactons pour vous annoncer que vous avez brillamment complété et réussi la formation :</p>
           <p style="font-size: 16px; font-weight: 700; color: #003366; text-align: center; padding: 14px; background-color: #f1f5f9; border-radius: 8px; margin: 16px 0;">
-            « ${courseTitle} »
+            « ${safeTitle} »
           </p>
           <p style="font-size: 15px; color: #334155; line-height: 1.6;">Votre <strong>Certificat d'Aptitude Professionnelle officiel</strong> a été généré et est immédiatement disponible sous format numérique haut de gamme.</p>
           
           <div style="text-align: center; margin: 28px 0;">
-            <a href="${pdfUrl}" target="_blank" style="background-color: #f47c20; color: #ffffff; padding: 14px 28px; border-radius: 10px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 15px; text-transform: uppercase;">
+            <a href="${safeUrl}" target="_blank" style="background-color: #f47c20; color: #ffffff; padding: 14px 28px; border-radius: 10px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 15px; text-transform: uppercase;">
               Télécharger mon Certificat (PDF)
             </a>
           </div>
 
           <p style="font-size: 13px; color: #64748b; line-height: 1.5; border-top: 1px solid #cbd5e1; padding-top: 18px; margin-top: 24px;">
             Si le bouton ci-dessus ne fonctionne pas, vous pouvez copier-coller le lien suivant dans votre navigateur :<br/>
-            <a href="${pdfUrl}" target="_blank" style="color: #f47c20; word-break: break-all;">${pdfUrl}</a>
+            <a href="${safeUrl}" target="_blank" style="color: #f47c20; word-break: break-all;">${safeUrl}</a>
           </p>
           
           <p style="font-size: 14px; color: #334155; line-height: 1.6; margin-top: 24px;">
@@ -1372,7 +1392,7 @@ app.post('/api/send-certificate-email', async (req: any, res: any) => {
       const response = await resend.emails.send({
         from: 'INFJ Academie <academie@infj.site>',
         to: [email],
-        subject: `🎓 Félicitations ! Votre certificat pour la formation "${courseTitle}"`,
+        subject: `🎓 Félicitations ! Votre certificat pour la formation "${safeSubjectTitle}"`,
         html: emailHTML,
       });
 
@@ -1413,78 +1433,6 @@ async function startServer() {
   const fallbackImagesPath = isProd
     ? path.join(process.cwd(), 'dist/images')
     : path.resolve(process.cwd(), 'carlos Site/frontend/images');
-
-  // ROUTE DE DIAGNOSTIC TEMPORAIRE - à retirer une fois le problème d'images résolu.
-  app.get('/api/debug/images', (req, res) => {
-    const distPath = path.join(process.cwd(), 'dist');
-    const info: any = { NODE_ENV: process.env.NODE_ENV, cwd: process.cwd(), isProd, imagesPath, fallbackImagesPath, distPath };
-    try { info.cwd_contents = fs.readdirSync(process.cwd()); } catch (e: any) { info.cwd_contents_error = e.message; }
-    try {
-      info.dist_exists = fs.existsSync(distPath);
-      if (info.dist_exists) info.dist_contents = fs.readdirSync(distPath);
-    } catch (e: any) { info.dist_error = e.message; }
-    try {
-      info.images_dir_exists = fs.existsSync(imagesPath);
-      if (info.images_dir_exists) {
-        const files = fs.readdirSync(imagesPath);
-        info.images_dir_contents = files.map(f => {
-          const stat = fs.statSync(path.join(imagesPath, f));
-          return { name: f, size: stat.size };
-        });
-      }
-    } catch (e: any) { info.images_dir_error = e.message; }
-    res.json(info);
-  });
-
-  // Route de test : sert le logo directement en lisant les octets à la main,
-  // sans passer par express.static, pour isoler la cause exacte du problème.
-  app.get('/api/debug/logo-raw', (req, res) => {
-    try {
-      const filePath = path.join(imagesPath, 'logo.png');
-      const buffer = fs.readFileSync(filePath);
-      res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Content-Length', buffer.length);
-      res.send(buffer);
-    } catch (e: any) {
-      res.status(500).json({ error: e.message });
-    }
-  });
-
-  // Route de test : sert le logo intégré directement en base64 dans le HTML (aucune requête binaire séparée)
-  app.get('/api/debug/logo-embedded', (req, res) => {
-    try {
-      const filePath = path.join(imagesPath, 'logo.png');
-      const buffer = fs.readFileSync(filePath);
-      const base64 = buffer.toString('base64');
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.send(`
-        <!DOCTYPE html>
-        <html><body style="background:#eee; text-align:center; padding: 40px; font-family: sans-serif;">
-          <h2>Test : image intégrée en base64 (aucune requête séparée)</h2>
-          <p>Taille du fichier lu sur disque : ${buffer.length} octets</p>
-          <img src="data:image/png;base64,${base64}" style="max-width: 300px; border: 3px solid red;" alt="Test logo" />
-          <p>Si tu vois le logo ci-dessus, le fichier est intact et le problème vient de la façon dont les images sont servies en HTTP séparé.</p>
-        </body></html>
-      `);
-    } catch (e: any) {
-      res.status(500).send('Erreur: ' + e.message);
-    }
-  });
-
-  // Route de test : un minuscule pixel rouge 1x1 généré à la volée (68 octets),
-  // pour vérifier si la TAILLE de la réponse est le facteur déterminant.
-  app.get('/api/debug/tiny-pixel', (req, res) => {
-    const tinyPngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(`
-      <!DOCTYPE html>
-      <html><body style="background:#eee; text-align:center; padding: 40px; font-family: sans-serif;">
-        <h2>Test : minuscule pixel rouge (68 octets)</h2>
-        <img src="data:image/png;base64,${tinyPngBase64}" style="width: 100px; height: 100px; border: 3px solid blue;" alt="Pixel test" />
-        <p>Si tu vois un carré ROUGE avec une bordure BLEUE ci-dessus, le problème vient de la taille des grosses images.</p>
-      </body></html>
-    `);
-  });
 
   // Register image routes before Vite middleware to ensure they take precedence and serve reliably
   // Cache-Control explicite : sans ça, certains navigateurs (mobile surtout) mettent en cache de façon
